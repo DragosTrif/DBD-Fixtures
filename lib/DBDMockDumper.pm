@@ -92,6 +92,7 @@ sub _override_dbi_methods {
 	$self->_override_bind_param();
 	$self->_override_dbi_fetchrow_hashref();
 	$self->_override_dbi_fetchrow_arrayref();
+	$self->_override_dbi_fetchrow_array();
 
 	return $self;
 }
@@ -209,6 +210,30 @@ sub _override_dbi_fetchrow_arrayref {
 			}
 
 			return $retval;
+		}
+	);
+}
+
+sub _override_dbi_fetchrow_array {
+	my $self   = shift;
+	my $result = $self->{result};
+
+	my $orig_selectrow_array = \&DBI::st::fetchrow_array;
+
+		$self->get_override_object()->replace(
+		'DBI::st::fetchrow_array',
+		sub {
+			my ($sth) = @_;
+
+			my @retval = $orig_selectrow_array->($sth);
+
+			my $last_index = $#$result;
+
+			if (scalar @retval) {
+				push @{$self->{result}->[$last_index]->{results}}, \@retval;
+			}
+
+			return @retval;
 		}
 	);
 }
