@@ -1,0 +1,109 @@
+[
+   {
+      "results" : [
+         [
+            2,
+            "audio"
+         ],
+         [
+            1,
+            "video"
+         ]
+      ],
+      "bound_params" : [
+         2,
+         1
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC",
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ]
+   },
+   {
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC",
+      "bound_params" : [
+         1,
+         2
+      ],
+      "results" : [
+         [
+            2,
+            "audio"
+         ],
+         [
+            1,
+            "video"
+         ]
+      ]
+   },
+   {
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(:id, :id_2) ORDER BY id DESC",
+      "bound_params" : [
+         2,
+         1
+      ],
+      "results" : [
+         [
+            2,
+            "audio"
+         ],
+         [
+            1,
+            "video"
+         ]
+      ]
+   },
+   {
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ],
+      "statement" : "SELECT * FROM media_types",
+      "bound_params" : [],
+      "results" : [
+         [
+            1,
+            "video"
+         ],
+         [
+            2,
+            "audio"
+         ],
+         [
+            3,
+            "image"
+         ]
+      ]
+   },
+   {
+      "bound_params" : [
+         11,
+         12
+      ],
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?)"
+   }
+]
+
