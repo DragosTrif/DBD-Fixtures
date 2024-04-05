@@ -1,0 +1,109 @@
+[
+   {
+      "results" : [
+         [
+            1,
+            "video"
+         ],
+         [
+            2,
+            "audio"
+         ]
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?)",
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ],
+      "bound_params" : [
+         2,
+         1
+      ]
+   },
+   {
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?)",
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ],
+      "bound_params" : [
+         1,
+         2
+      ],
+      "results" : [
+         [
+            1,
+            "video"
+         ],
+         [
+            2,
+            "audio"
+         ]
+      ]
+   },
+   {
+      "results" : [
+         [
+            1,
+            "video"
+         ],
+         [
+            2,
+            "audio"
+         ]
+      ],
+      "bound_params" : [
+         2,
+         1
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(:id, :id_2)",
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ]
+   },
+   {
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ],
+      "statement" : "SELECT * FROM media_types",
+      "bound_params" : [],
+      "results" : [
+         [
+            1,
+            "video"
+         ],
+         [
+            2,
+            "audio"
+         ],
+         [
+            3,
+            "image"
+         ]
+      ]
+   },
+   {
+      "bound_params" : [
+         11,
+         12
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?)",
+      "col_names" : [
+         [
+            "id",
+            "media_type"
+         ]
+      ]
+   }
+]
+
