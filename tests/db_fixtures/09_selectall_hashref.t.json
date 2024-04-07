@@ -1,0 +1,68 @@
+[
+   {
+      "bound_params" : [
+         2,
+         1,
+         3
+      ],
+      "results" : [
+         [
+            3,
+            "image"
+         ],
+         [
+            2,
+            "audio"
+         ],
+         [
+            1,
+            "video"
+         ]
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?,?) ORDER BY id DESC",
+      "col_names" : [
+         "id",
+         "media_type"
+      ]
+   },
+   {
+      "results" : [
+         [
+            1,
+            "video"
+         ],
+         [
+            2,
+            "audio"
+         ],
+         [
+            3,
+            "image"
+         ]
+      ],
+      "col_names" : [
+         "id",
+         "media_type"
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?,?) ORDER BY id DESC",
+      "bound_params" : [
+         2,
+         1,
+         3
+      ]
+   },
+   {
+      "results" : [],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?,?) ORDER BY id DESC",
+      "col_names" : [
+         "id",
+         "media_type"
+      ],
+      "bound_params" : [
+         12,
+         12,
+         13
+      ]
+   }
+]
+
