@@ -30,6 +30,7 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	fetchrow_array     => 'DBI::st::fetchrow_array',
 	selectall_arrayref => 'DBI::db::selectall_arrayref',
 	selectall_hashref  => 'DBI::db::selectall_hashref',
+	selectcol_arrayref => 'DBI::db::selectcol_arrayref',
 );
 
 sub new {
@@ -99,12 +100,13 @@ sub _override_dbi_methods {
 	my $self = shift;
 
 	$self->_override_dbi_execute($MOCKED_DBI_METHODS{execute});
-	$self->_override_bind_param($MOCKED_DBI_METHODS{bind_param});
+	$self->_override_dbi_bind_param($MOCKED_DBI_METHODS{bind_param});
 	$self->_override_dbi_fetchrow_hashref($MOCKED_DBI_METHODS{fetchrow_hashref});
 	$self->_override_dbi_fetchrow_arrayref($MOCKED_DBI_METHODS{fetchrow_arrayref});
 	$self->_override_dbi_fetchrow_array($MOCKED_DBI_METHODS{fetchrow_array});
 	$self->_override_dbi_selectall_arrayref($MOCKED_DBI_METHODS{selectall_arrayref});
 	$self->_override_dbi_selectall_hashref($MOCKED_DBI_METHODS{selectall_hashref});
+	$self->_override_dbi_selectcol_arrayref($MOCKED_DBI_METHODS{selectcol_arrayref});
 
 	return $self;
 }
@@ -153,7 +155,7 @@ sub _override_dbi_execute {
 	return $self;
 }
 
-sub _override_bind_param {
+sub _override_dbi_bind_param {
 	my $self       = shift;
 	my $bind_param = shift;
 
@@ -178,8 +180,6 @@ sub _override_dbi_fetchrow_hashref {
 	my $self             = shift;
 	my $fetchrow_hashref = shift;
 
-	my $result = $self->{result};
-
 	my $orig_selectrow_hashref = \&$fetchrow_hashref;
 
 	$self->get_override_object()->replace(
@@ -189,8 +189,6 @@ sub _override_dbi_fetchrow_hashref {
 
 			my $retval = $orig_selectrow_hashref->($sth);
 
-			my $last_index = $#$result;
-
 			if (ref $retval) {
 				my $query_results = [];
 
@@ -198,19 +196,19 @@ sub _override_dbi_fetchrow_hashref {
 					push @{$query_results}, $retval->{$key};
 				}
 
-				push @{$self->{result}->[$last_index]->{results}}, $query_results;
+				push @{$self->{result}->[-1]->{results}}, $query_results;
 			}
 
 			return $retval;
 		}
 	);
+
+	return $self;
 }
 
 sub _override_dbi_fetchrow_arrayref {
 	my $self              = shift;
 	my $fetchrow_arrayref = shift;
-
-	my $result = $self->{result};
 
 	my $orig_selectrow_arrayref = \&$fetchrow_arrayref;
 
@@ -221,23 +219,22 @@ sub _override_dbi_fetchrow_arrayref {
 
 			my $retval = $orig_selectrow_arrayref->($sth);
 
-			my $last_index = $#$result;
-			my @retval     = ();
+			my @retval = ();
 			if (ref $retval) {
 				@retval = @{$retval};
-				push @{$self->{result}->[$last_index]->{results}}, \@retval;
+				push @{$self->{result}->[-1]->{results}}, \@retval;
 			}
 
 			return $retval;
 		}
 	);
+
+	return $self;
 }
 
 sub _override_dbi_fetchrow_array {
 	my $self           = shift;
 	my $fetchrow_array = shift;
-
-	my $result = $self->{result};
 
 	my $orig_selectrow_array = \&$fetchrow_array;
 
@@ -248,15 +245,15 @@ sub _override_dbi_fetchrow_array {
 
 			my @retval = $orig_selectrow_array->($sth);
 
-			my $last_index = $#$result;
-
 			if (scalar @retval) {
-				push @{$self->{result}->[$last_index]->{results}}, \@retval;
+				push @{$self->{result}->[-1]->{results}}, \@retval;
 			}
 
 			return @retval;
 		}
 	);
+
+	return $self;
 }
 
 sub _override_dbi_selectall_arrayref {
@@ -271,13 +268,11 @@ sub _override_dbi_selectall_arrayref {
 		sub {
 			my ($dbh, $sql, $slice, @parmas) = @_;
 
-			my $retval     = $orig_selectall_arrayref->($dbh, $sql, $slice, @parmas);
-			my $last_index = $#$result;
-			my $data       = [];
+			my $retval = $orig_selectall_arrayref->($dbh, $sql, $slice, @parmas);
+			my $data   = [];
 
 			if (ref $retval) {
-				my $current_record = $self->{result}->[$last_index];
-				my $col_names      = $current_record->{col_names};
+				my $col_names = $self->_get_current_record_column_names();
 
 				foreach my $row_as_hash (@{$retval}) {
 					my $row_as_array = [];
@@ -287,7 +282,7 @@ sub _override_dbi_selectall_arrayref {
 
 					push @{$data}, $row_as_array;
 				}
-				$self->{result}->[$last_index]->{results} = $data;
+				$self->{result}->[-1]->{results} = $data;
 			}
 
 			return $retval;
@@ -301,7 +296,7 @@ sub _override_dbi_selectall_hashref {
 	my $self              = shift;
 	my $selectall_hashref = shift;
 
-	my $result                 = $self->{result};
+
 	my $orig_selectall_hashref = \&$selectall_hashref;
 
 	$self->get_override_object()->replace(
@@ -311,10 +306,8 @@ sub _override_dbi_selectall_hashref {
 
 			my $retval = $orig_selectall_hashref->($dbh, $statement, $key_field, $attr, @bind_values);
 
-			my $last_index     = $#$result;
-			my $current_record = $self->{result}->[$last_index];
-			my $col_names      = $current_record->{col_names};
-			my $mock_data      = [];
+			my $col_names = $self->_get_current_record_column_names();
+			my $mock_data = [];
 
 			walk sub {
 				my $rows = $_;
@@ -326,12 +319,52 @@ sub _override_dbi_selectall_hashref {
 				return;
 			}, $retval;
 
-			$self->{result}->[$last_index]->{results} = $mock_data;
+			$self->{result}->[-1]->{results} = $mock_data;
 			return $retval;
 		}
 	);
 
 	return $self;
+}
+
+sub _override_dbi_selectcol_arrayref {
+	my $self               = shift;
+	my $selectcol_arrayref = shift;
+
+	my $orig_selectcol_arrayref = \&$selectcol_arrayref;
+
+	$self->get_override_object()->replace(
+		$selectcol_arrayref,
+		sub {
+			my ($dbh, $statement, $attr, @bind_values) = @_;
+			my $mocked_data = [];
+
+			my $retval  = $orig_selectcol_arrayref->($dbh, $statement, $attr, @bind_values);
+			my @db_data = @{$retval};
+
+			my $length = 1;
+			$length = scalar @{$attr->{Columns}}
+				if $attr && ref $attr eq 'HASH';
+
+			foreach my $row (0 .. $#db_data) {
+				my $query_data = [splice(@db_data, 0, $length)];
+				last if scalar @{$query_data} == 0;
+				push @{$mocked_data}, $query_data;
+			}
+
+			$self->{result}->[-1]->{results} = $mocked_data;
+
+			return $retval;
+		}
+	);
+
+	return $self;
+}
+
+sub _get_current_record_column_names {
+	my $self = shift;
+
+	return $self->{result}->[-1]->{col_names};
 }
 
 sub _process_mock_data {
