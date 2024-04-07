@@ -17,7 +17,7 @@ use File::Slurper qw (read_text);
 use File::Spec;
 use Carp qw( croak );
 use Readonly;
-
+use Data::Walk;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -29,6 +29,7 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	fetchrow_arrayref  => 'DBI::st::fetchrow_arrayref',
 	fetchrow_array     => 'DBI::st::fetchrow_array',
 	selectall_arrayref => 'DBI::db::selectall_arrayref',
+	selectall_hashref  => 'DBI::db::selectall_hashref',
 );
 
 sub new {
@@ -103,6 +104,7 @@ sub _override_dbi_methods {
 	$self->_override_dbi_fetchrow_arrayref($MOCKED_DBI_METHODS{fetchrow_arrayref});
 	$self->_override_dbi_fetchrow_array($MOCKED_DBI_METHODS{fetchrow_array});
 	$self->_override_dbi_selectall_arrayref($MOCKED_DBI_METHODS{selectall_arrayref});
+	$self->_override_dbi_selectall_hashref($MOCKED_DBI_METHODS{selectall_hashref});
 
 	return $self;
 }
@@ -288,6 +290,43 @@ sub _override_dbi_selectall_arrayref {
 				$self->{result}->[$last_index]->{results} = $data;
 			}
 
+			return $retval;
+		}
+	);
+
+	return $self;
+}
+
+sub _override_dbi_selectall_hashref {
+	my $self              = shift;
+	my $selectall_hashref = shift;
+
+	my $result                 = $self->{result};
+	my $orig_selectall_hashref = \&$selectall_hashref;
+
+	$self->get_override_object()->replace(
+		$selectall_hashref,
+		sub {
+			my ($dbh, $statement, $key_field, $attr, @bind_values) = @_;
+
+			my $retval = $orig_selectall_hashref->($dbh, $statement, $key_field, $attr, @bind_values);
+
+			my $last_index     = $#$result;
+			my $current_record = $self->{result}->[$last_index];
+			my $col_names      = $current_record->{col_names};
+			my $mock_data      = [];
+
+			walk sub {
+				my $rows = $_;
+				if (ref $rows && scalar keys %{$rows} == scalar @{$col_names}) {
+					my %data = %$rows;
+					push @{$mock_data}, [@data{@{$col_names}}];
+				}
+
+				return;
+			}, $retval;
+
+			$self->{result}->[$last_index]->{results} = $mock_data;
 			return $retval;
 		}
 	);
