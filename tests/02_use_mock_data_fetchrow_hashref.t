@@ -54,12 +54,7 @@ subtest 'preapare and execute with data from test' => sub {
             "audio"
          ]
       ],
-      "col_names" => [
-         [
-            "id",
-            "media_type"
-         ]
-      ],
+      "col_names" => [ "id", "media_type" ],
       "bound_params" => [
          2,
          1
@@ -75,7 +70,7 @@ subtest 'preapare and execute with data from test' => sub {
     while (my $row = $sth->fetchrow_hashref()) {
         push @{$got}, $row;
     }
-
+    say Dumper $got;
     is($got, $expected, 'prepare and execute is ok');
 };
 

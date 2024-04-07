@@ -4,10 +4,6 @@
          "id",
          "media_type"
       ],
-      "bound_params" : [
-         2,
-         1
-      ],
       "results" : [
          [
             null,
@@ -18,10 +14,19 @@
             "video"
          ]
       ],
+      "bound_params" : [
+         2,
+         1
+      ],
       "statement" : "SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC"
    },
    {
+      "statement" : "SELECT * FROM media_types",
       "bound_params" : [],
+      "col_names" : [
+         "id",
+         "media_type"
+      ],
       "results" : [
          [
             1,
@@ -35,23 +40,18 @@
             3,
             "image"
          ]
-      ],
-      "statement" : "SELECT * FROM media_types",
-      "col_names" : [
-         "id",
-         "media_type"
       ]
    },
    {
-      "statement" : "SELECT * FROM media_types WHERE id IN(?,?)",
       "results" : [],
-      "bound_params" : [
-         11,
-         12
-      ],
       "col_names" : [
          "id",
          "media_type"
+      ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?)",
+      "bound_params" : [
+         11,
+         12
       ]
    }
 ]

@@ -1,16 +1,10 @@
 [
    {
-      "statement" : "SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC",
-      "bound_params" : [
-         2,
-         1
-      ],
       "col_names" : [
-         [
-            "id",
-            "media_type"
-         ]
+         "id",
+         "media_type"
       ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC",
       "results" : [
          [
             2,
@@ -20,6 +14,10 @@
             1,
             "video"
          ]
+      ],
+      "bound_params" : [
+         2,
+         1
       ]
    },
    {
@@ -31,19 +29,17 @@
          [
             1,
             "video"
-         ]
-      ],
-      "col_names" : [
-         [
-            "id",
-            "media_type"
          ]
       ],
       "bound_params" : [
          1,
          2
       ],
-      "statement" : "SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC"
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC",
+      "col_names" : [
+         "id",
+         "media_type"
+      ]
    },
    {
       "results" : [
@@ -56,27 +52,18 @@
             "video"
          ]
       ],
-      "statement" : "SELECT * FROM media_types WHERE id IN(:id, :id_2) ORDER BY id DESC",
       "bound_params" : [
          2,
          1
       ],
+      "statement" : "SELECT * FROM media_types WHERE id IN(:id, :id_2) ORDER BY id DESC",
       "col_names" : [
-         [
-            "id",
-            "media_type"
-         ]
+         "id",
+         "media_type"
       ]
    },
    {
       "bound_params" : [],
-      "statement" : "SELECT * FROM media_types",
-      "col_names" : [
-         [
-            "id",
-            "media_type"
-         ]
-      ],
       "results" : [
          [
             1,
@@ -90,19 +77,22 @@
             3,
             "image"
          ]
+      ],
+      "statement" : "SELECT * FROM media_types",
+      "col_names" : [
+         "id",
+         "media_type"
       ]
    },
    {
+      "statement" : "SELECT * FROM media_types WHERE id IN(?,?)",
+      "col_names" : [
+         "id",
+         "media_type"
+      ],
       "bound_params" : [
          11,
          12
-      ],
-      "statement" : "SELECT * FROM media_types WHERE id IN(?,?)",
-      "col_names" : [
-         [
-            "id",
-            "media_type"
-         ]
       ]
    }
 ]
