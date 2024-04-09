@@ -31,6 +31,7 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	selectall_arrayref => 'DBI::db::selectall_arrayref',
 	selectall_hashref  => 'DBI::db::selectall_hashref',
 	selectcol_arrayref => 'DBI::db::selectcol_arrayref',
+	selectrow_array    => 'DBI::db::selectrow_array',
 );
 
 sub new {
@@ -107,6 +108,7 @@ sub _override_dbi_methods {
 	$self->_override_dbi_selectall_arrayref($MOCKED_DBI_METHODS{selectall_arrayref});
 	$self->_override_dbi_selectall_hashref($MOCKED_DBI_METHODS{selectall_hashref});
 	$self->_override_dbi_selectcol_arrayref($MOCKED_DBI_METHODS{selectcol_arrayref});
+	$self->_override_dbi_selectrow_array($MOCKED_DBI_METHODS{selectrow_array});
 
 	return $self;
 }
@@ -359,6 +361,41 @@ sub _override_dbi_selectcol_arrayref {
 	);
 
 	return $self;
+}
+
+sub _override_dbi_selectrow_array {
+	my $self            = shift;
+	my $selectrow_array = shift;
+
+	my $original_selectrow_array = \&$selectrow_array;
+
+	$self->get_override_object()->replace(
+		$selectrow_array,
+		sub {
+			my ($dbh, $statement, $attr, @bind_values) = @_;
+			my $sth;
+
+			if (!ref $statement) {
+				$sth = $dbh->prepare($statement);
+			} else {
+				$sth = $statement;
+			}
+
+			my $sql    = $sth->{Statement};
+			my @retval = $original_selectrow_array->($dbh, $statement, $attr, @bind_values);
+
+			my $query_data = {
+				statement    => $sql,
+				bound_params => \@bind_values,
+				col_names    => $sth->{NAME},
+				results      => \@retval,
+			};
+
+			push @{$self->{result}}, $query_data;
+
+			return @retval;
+		}
+	);
 }
 
 sub _get_current_record_column_names {
