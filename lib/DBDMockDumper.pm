@@ -8,9 +8,9 @@ use DBD::Mock;
 
 use Data::Dumper;
 use feature 'say';
-use Sub::Override;
-use English qw ( -no_match_vars );
 
+use Sub::Override;
+use English    qw ( -no_match_vars );
 use File::Path qw(make_path);
 use Cpanel::JSON::XS;
 use File::Slurper qw (read_text);
@@ -40,9 +40,11 @@ sub new {
 
 	if ($args_for) {
 		$self->_validate_args($args_for);
+		$self->_initialize($args_for);
+	} else {
+		$self->_initialize();
 	}
 
-	$self->_initialize($args_for);
 
 	return $self;
 }
@@ -52,15 +54,20 @@ sub _initialize {
 	my $args_for = shift;
 
 	my %args_for = ();
-	%args_for = %{$args_for};
+
+	if ($args_for) {
+		%args_for = %{$args_for};
+	}
 
 	$self->_set_fixtures_file($args_for{file});
-
+	$self->{override_flag} = 0;
+	say $self->{fixture_file};
 	if (my $dbh = $args_for{dbh}) {
-		$self->{dbh}         = $dbh;
-		$override            = Sub::Override->new();
-		$self->{bind_params} = [];
-		$self->{override}    = $override;
+		$self->{dbh}           = $dbh;
+		$override              = Sub::Override->new();
+		$self->{bind_params}   = [];
+		$self->{override}      = $override;
+		$self->{override_flag} = 1;
 		$self->_override_dbi_methods();
 		$self->{result} = [];
 	} elsif (my $fixtures = $args_for{data}) {
@@ -149,6 +156,7 @@ sub _override_dbi_execute {
 			$query_data->{bound_params} = $self->{bind_params}
 				if scalar @{$self->{bind_params}} > 0;
 			push @{$self->{result}}, $query_data;
+			$self->_write_fo_file();
 			$self->{bind_params} = [];
 			return $retval;
 		}
@@ -169,6 +177,7 @@ sub _override_dbi_bind_param {
 			my ($sth, $bind, $val) = @_;
 
 			push @{$self->{bind_params}}, $val;
+
 			my $retval = $orig_execute->($sth, $bind, $val);
 			return $retval;
 		}
@@ -199,6 +208,7 @@ sub _override_dbi_fetchrow_hashref {
 				}
 
 				push @{$self->{result}->[-1]->{results}}, $query_results;
+				$self->_write_fo_file();
 			}
 
 			return $retval;
@@ -225,6 +235,7 @@ sub _override_dbi_fetchrow_arrayref {
 			if (ref $retval) {
 				@retval = @{$retval};
 				push @{$self->{result}->[-1]->{results}}, \@retval;
+				$self->_write_fo_file();
 			}
 
 			return $retval;
@@ -249,6 +260,7 @@ sub _override_dbi_fetchrow_array {
 
 			if (scalar @retval) {
 				push @{$self->{result}->[-1]->{results}}, \@retval;
+				$self->_write_fo_file();
 			}
 
 			return @retval;
@@ -285,6 +297,7 @@ sub _override_dbi_selectall_arrayref {
 					push @{$data}, $row_as_array;
 				}
 				$self->{result}->[-1]->{results} = $data;
+				$self->_write_fo_file();
 			}
 
 			return $retval;
@@ -316,6 +329,7 @@ sub _override_dbi_selectall_hashref {
 				if (ref $rows && scalar keys %{$rows} == scalar @{$col_names}) {
 					my %data = %$rows;
 					push @{$mock_data}, [@data{@{$col_names}}];
+					$self->_write_fo_file();
 				}
 
 				return;
@@ -355,7 +369,7 @@ sub _override_dbi_selectcol_arrayref {
 			}
 
 			$self->{result}->[-1]->{results} = $mocked_data;
-
+			$self->_write_fo_file();
 			return $retval;
 		}
 	);
@@ -388,11 +402,12 @@ sub _override_dbi_selectrow_array {
 				statement    => $sql,
 				bound_params => \@bind_values,
 				col_names    => $sth->{NAME},
-				results      => \@retval,
+				results      => [\@retval],
 			};
 
 			push @{$self->{result}}, $query_data;
 
+			$self->_write_fo_file();
 			return @retval;
 		}
 	);
@@ -457,18 +472,35 @@ sub _validate_args {
 	return $self;
 }
 
+sub _write_fo_file {
+	my $self = shift;
+
+	my $result        = $self->{result};
+	my $override_flag = $self->{override_flag};
+	my $fixture_file  = $self->{fixture_file};
+
+	return unless defined $result;
+	return unless $override_flag;
+
+	if ($override_flag && scalar @{$result}) {
+		my $json_data = $JSON_OBJ->encode($result);
+		my $fh        = IO::File->new($fixture_file, 'w') or croak "cannot open file:$fixture_file  $!\n";
+		say $fh $json_data;
+		$fh->close or croak "cannot close file:$fixture_file  $!\n";
+		undef $fh;
+	}
+
+	return $self;
+}
+
 sub DESTROY {
 	my $self = shift;
 
-	return unless defined $self->{result};
-
-	if (scalar @{$self->{result}} > 0) {
-		my $json_data    = $JSON_OBJ->encode($self->{result});
-		my $fixture_file = $self->{fixture_file};
-		my $fh           = IO::File->new($fixture_file, 'w') or croak "cannot open file:$fixture_file  $!\n";
-		say $fh $json_data;
-		undef $fh;
-	}
+	my $result        = delete $self->{result};
+	my $override_flag = delete $self->{override_flag};
+	my $override      = delete $self->{override};
+	my $dbh           = delete $self->{dbh};
+	my $fixture_file  = delete $self->{fixture_file};
 
 	return $self;
 }
