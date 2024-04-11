@@ -32,6 +32,7 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	selectall_hashref  => 'DBI::db::selectall_hashref',
 	selectcol_arrayref => 'DBI::db::selectcol_arrayref',
 	selectrow_array    => 'DBI::db::selectrow_array',
+	selectrow_arrayref => 'DBI::db::selectrow_arrayref',
 );
 
 sub new {
@@ -61,7 +62,7 @@ sub _initialize {
 
 	$self->_set_fixtures_file($args_for{file});
 	$self->{override_flag} = 0;
-	say $self->{fixture_file};
+
 	if (my $dbh = $args_for{dbh}) {
 		$self->{dbh}           = $dbh;
 		$override              = Sub::Override->new();
@@ -116,6 +117,7 @@ sub _override_dbi_methods {
 	$self->_override_dbi_selectall_hashref($MOCKED_DBI_METHODS{selectall_hashref});
 	$self->_override_dbi_selectcol_arrayref($MOCKED_DBI_METHODS{selectcol_arrayref});
 	$self->_override_dbi_selectrow_array($MOCKED_DBI_METHODS{selectrow_array});
+	$self->_override_dbi_selectrow_arrayref($MOCKED_DBI_METHODS{selectrow_arrayref});
 
 	return $self;
 }
@@ -409,6 +411,42 @@ sub _override_dbi_selectrow_array {
 
 			$self->_write_fo_file();
 			return @retval;
+		}
+	);
+}
+
+sub _override_dbi_selectrow_arrayref {
+	my $self               = shift;
+	my $selectrow_arrayref = shift;
+
+	my $original_selectrow_arrayref = \&$selectrow_arrayref;
+
+	$self->get_override_object()->replace(
+		$selectrow_arrayref,
+		sub {
+			my ($dbh, $statement, $attr, @bind_values) = @_;
+			my $sth;
+
+			if (!ref $statement) {
+				$sth = $dbh->prepare($statement);
+			} else {
+				$sth = $statement;
+			}
+
+			my $sql    = $sth->{Statement};
+			my $retval = $original_selectrow_arrayref->($dbh, $statement, $attr, @bind_values);
+
+			my $query_data = {
+				statement    => $sql,
+				bound_params => \@bind_values,
+				col_names    => $sth->{NAME},
+				results      => [$retval],
+			};
+
+			push @{$self->{result}}, $query_data;
+
+			$self->_write_fo_file();
+			return $retval;
 		}
 	);
 }
