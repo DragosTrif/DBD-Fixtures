@@ -33,6 +33,7 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	selectcol_arrayref => 'DBI::db::selectcol_arrayref',
 	selectrow_array    => 'DBI::db::selectrow_array',
 	selectrow_arrayref => 'DBI::db::selectrow_arrayref',
+	selectrow_hashref  => 'DBI::db::selectrow_hashref',
 );
 
 sub new {
@@ -118,6 +119,7 @@ sub _override_dbi_methods {
 	$self->_override_dbi_selectcol_arrayref($MOCKED_DBI_METHODS{selectcol_arrayref});
 	$self->_override_dbi_selectrow_array($MOCKED_DBI_METHODS{selectrow_array});
 	$self->_override_dbi_selectrow_arrayref($MOCKED_DBI_METHODS{selectrow_arrayref});
+	$self->_override_dbi_selectrow_hashref($MOCKED_DBI_METHODS{selectrow_hashref});
 
 	return $self;
 }
@@ -203,11 +205,7 @@ sub _override_dbi_fetchrow_hashref {
 			my $retval = $orig_selectrow_hashref->($sth);
 
 			if (ref $retval) {
-				my $query_results = [];
-
-				foreach my $key (sort keys %{$retval}) {
-					push @{$query_results}, $retval->{$key};
-				}
+				my $query_results = $self->_set_hashref_response($sth, $retval);
 
 				push @{$self->{result}->[-1]->{results}}, $query_results;
 				$self->_write_fo_file();
@@ -444,8 +442,37 @@ sub _override_dbi_selectrow_arrayref {
 			};
 
 			push @{$self->{result}}, $query_data;
-
 			$self->_write_fo_file();
+
+			return $retval;
+		}
+	);
+}
+
+sub _override_dbi_selectrow_hashref {
+	my $self              = shift;
+	my $selectrow_hashref = shift;
+
+	my $original_selectrow_hashref = \&$selectrow_hashref;
+
+	$self->get_override_object()->replace(
+		$selectrow_hashref,
+		sub {
+			my ($dbh, $statement, $attr, @bind_values) = @_;
+			my $sth;
+
+			if (!ref $statement) {
+				$sth = $dbh->prepare($statement);
+			} else {
+				$sth = $statement;
+			}
+
+			my $sql    = $sth->{Statement};
+			my $retval = $original_selectrow_hashref->($dbh, $statement, $attr, @bind_values);
+
+
+			$self->{result}->[-1]->{results} = [$self->_set_hashref_response($sth, $retval)];
+
 			return $retval;
 		}
 	);
@@ -529,6 +556,20 @@ sub _write_fo_file {
 	}
 
 	return $self;
+}
+
+sub _set_hashref_response {
+	my $self   = shift;
+	my $sth    = shift;
+	my $retval = shift;
+
+	my $result = [];
+	my $cols   = $sth->{NAME};
+	foreach my $col (@{$cols}) {
+		push @{$result}, $retval->{$col};
+	}
+
+	return $result;
 }
 
 sub DESTROY {
