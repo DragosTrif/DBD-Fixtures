@@ -40,7 +40,7 @@ subtest 'preapare and execute' => sub {
         push @{$got}, $row;
     }
 
-    is($got, $expected, 'repare and execute is ok');
+    is($got, $expected, 'prepare and execute is ok');
 };
 
 subtest 'preapare and execute with data from test' => sub {

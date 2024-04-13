@@ -34,7 +34,7 @@ subtest 'preapare and execute' => sub {
     is($got, $expected, 'prepare and execute is ok');
 };
 
-subtest 'bind params with postional bind' => sub {
+subtest 'Use positional binding to bind parameters' => sub {
 
     my $sth = $dbh->prepare($sql);
     $sth->bind_param(1, 1, undef);
@@ -49,7 +49,7 @@ subtest 'bind params with postional bind' => sub {
     is($got, $expected, 'postional bind is ok');
 };
 
-subtest 'bind params with named bind' => sub {
+subtest 'Use named binds to bind parameters' => sub {
     
     my $sth = $dbh->prepare('SELECT * FROM media_types WHERE id IN(:id, :id_2) ORDER BY id DESC');
     $sth->bind_param(':id' => 2, undef);
@@ -60,10 +60,10 @@ subtest 'bind params with named bind' => sub {
         push @{$got}, [@{$row}];
     }
 
-    is($got, $expected, 'binding names params is ok');
+    is($got, $expected, 'The named parameter binding is ok');
 };
 
-subtest 'no bind parmas' => sub {
+subtest 'no bind paramas' => sub {
     
     my $sth = $dbh->prepare('SELECT * FROM media_types');
     $sth->execute();
@@ -89,7 +89,7 @@ subtest 'no bind parmas' => sub {
         push @{$got}, [@{$row}];
     }
     
-    is($got, $expected, 'no biding parmas is ok');
+    is($got, $expected, 'no biding paramas is ok');
 
 };
 
@@ -105,7 +105,7 @@ subtest 'no rows returned' => sub {
     while (my $row = $sth->fetchrow_arrayref()) {
         push @{$got}, [@{$row}];
     }
-    is($got, $expected, 'no biding parmas is ok');
+    is($got, $expected, 'no rows returned is ok');
 
 };
 
