@@ -10,6 +10,8 @@ use DBDMockDumper;
 use Data::Dumper;
 use feature 'say';
 
+note 'use mock data for fetchrow_hashref';
+
 my $dbh = DBDMockDumper->new({file => './tests/db_fixtures/01_generate_file.t.json'})->get_dbh();
 
 
@@ -38,7 +40,7 @@ subtest 'preapare and execute' => sub {
         push @{$got}, $row;
     }
 
-    is($got, $expected, 'prepare and execute is ok');
+    is($got, $expected, 'repare and execute is ok');
 };
 
 subtest 'preapare and execute with data from test' => sub {
@@ -74,7 +76,7 @@ subtest 'preapare and execute with data from test' => sub {
     is($got, $expected, 'prepare and execute is ok');
 };
 
-subtest 'bind params with postional bind' => sub {
+subtest 'Bind parameters using positional binding' => sub {
 
     my $sth = $dbh->prepare($sql);
     $sth->bind_param(1, 1, undef);
@@ -85,10 +87,10 @@ subtest 'bind params with postional bind' => sub {
         push @{$got}, $row;
     }
 
-    is($got, $expected, 'postional bind is ok');
+    is($got, $expected, 'Positional binding is okay');
 };
 
-subtest 'bind params with named bind' => sub {
+subtest 'Use named binds to bind parameters' => sub {
     
     my $sth = $dbh->prepare('SELECT * FROM media_types WHERE id IN(:id, :id_2)');
     $sth->bind_param(':id' => 2, undef);
@@ -99,10 +101,10 @@ subtest 'bind params with named bind' => sub {
         push @{$got}, $row;
     }
 
-    is($got, $expected, 'binding named params is ok');
+    is($got, $expected, 'binding names params is ok');
 };
 
-subtest 'no bind parmas' => sub {
+subtest 'no bind params' => sub {
     
     my $sth = $dbh->prepare('SELECT * FROM media_types');
     $sth->execute();
@@ -126,7 +128,7 @@ subtest 'no bind parmas' => sub {
         push @{$got}, $row;
     }
     
-    is($got, $expected, 'no biding parmas is ok');
+    is($got, $expected, 'No bidding for parmas is okay');
 
 };
 
@@ -142,7 +144,7 @@ subtest 'no rows returned' => sub {
     while (my $row = $sth->fetchrow_hashref()) {
         push @{$got}, $row;
     }
-    is($got, $expected, 'no biding parmas is ok');
+    is($got, $expected, 'no rows returned is ok');
 
 };
 
