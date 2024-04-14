@@ -6,13 +6,13 @@ use Test2::V0;
 use lib "lib";
 
 use MyDatabase 'db_handle';
-use DBDMockDumper;
+use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
 use feature 'say';
 
 note 'use mock data for fetchrow_hashref';
 
-my $dbh = DBDMockDumper->new({file => './tests/db_fixtures/01_generate_file.t.json'})->get_dbh();
+my $dbh = DBD::Mock::Session::GenerateFixtures->new({file => './tests/db_fixtures/01_generate_file.t.json'})->get_dbh();
 
 
 my $sql = <<"SQL";
@@ -64,7 +64,7 @@ subtest 'preapare and execute with data from test' => sub {
       "statement" => "SELECT * FROM media_types WHERE id IN(?,?)"
    },];
     
-    my $dbh2 = DBDMockDumper->new({data => $fixtures})->get_dbh();
+    my $dbh2 = DBD::Mock::Session::GenerateFixtures->new({data => $fixtures})->get_dbh();
     my $sth = $dbh2->prepare($sql);
     $sth->execute(2, 1);
     my $got = [];

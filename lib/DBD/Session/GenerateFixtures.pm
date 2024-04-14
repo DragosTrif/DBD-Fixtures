@@ -1,4 +1,4 @@
-package DBDMockDumper;
+package DBD::Session::GenerateFixtures;
 
 use strict;
 use warnings;
