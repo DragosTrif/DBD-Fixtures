@@ -585,3 +585,151 @@ sub DESTROY {
 }
 
 1;
+
+=head1 NAME
+
+DBD::Mock::Session::GenerateFixtures - When a real DBI database handle ($dbh) is provided, the module generates DBD::Mock::Session data.
+Otherwise, it returns a DBD::Mock::Session object populated with generated data.
+This not a part form DBD::Mock::Session distribution just a wrapper around it.
+
+=head1 SYNOPSIS
+
+	# Case 1: Providing a pre-existing DBI database handle for genereting a mocked data files
+	# with the test name
+	my $mock_dumper = DBD::Mock::Session::GenerateFixtures->new({ dbh => $dbh });
+	my $real_dbh = $mock_dumper->get_dbh();
+
+	# Case 2: Read data from the same file as current test
+	my $mock_dumper = DBD::Mock::Session::GenerateFixtures->new();
+	my $dbh = $mock_dumper->get_dbh();
+	# Your code using the mock DBD
+
+	# Case 3: Read data from a coustom file
+	my $mock_dumper = DBD::Mock::Session::GenerateFixtures->new({ file => 'path/to/fixture.json' });
+	my $dbh = $mock_dumper->get_dbh();
+	# Your code using the mock DBD
+
+	# Case 4: Providing an array reference containing mock data
+	my $mock_dumper = DBD::Mock::Session::GenerateFixtures->new({ data => \@mock_data });
+	my $dbh = $mock_dumper->get_dbh();
+	# Your code using the mock DBD
+
+=head1 DESCRIPTION
+
+The C<DBD::Mock::Session::GenerateFixtures> module provides functionalities for mocking C<DBD::Mock> for testing purposes.
+
+=head1 METHODS
+
+=head2 new(\%args_for)
+
+Constructor method to create a new C<DBD::Mock::Session::GenerateFixtures> object.
+
+Accepts an optional hash reference C<\%args_for> with the following keys:
+
+=over 4
+
+=item * C<file>: File path to the fixture file containing mocked data.
+
+=item * C<data>: Reference to an array containing mock data.
+
+=item * C<dbh>: Database handle used for reading the data required to genereate a mocked dbh. This should used first time you are runnig the tests.
+
+=back
+
+=head2 get_dbh()
+
+Returns the mocked database handle object.
+
+=head2 get_override_object()
+
+Returns the override object used for mocking DBI methods.
+
+=head1 PRIVATE METHODS
+
+These methods are not intended to be called directly from outside the module.
+
+=head2 _initialize(\%args_for)
+
+Initializes the C<DBD::Mock::Session::GenerateFixtures> object with the provided arguments.
+
+=head2 _set_mock_dbh(\@data)
+
+Sets up the mocked database handle based on the provided data.
+
+=head2 _override_dbi_methods()
+
+Overrides various DBI methods for mocking database interactions.
+
+=head2 _override_dbi_execute($dbi_execute)
+
+Overrides the C<execute> method of C<DBI::st> in order to capture the sql statement, bound_params and column names.
+
+=head2 _override_dbi_bind_param($bind_param)
+
+Overrides the C<bind_param> method of C<DBI::st> in order to capture the bound params.
+
+=head2 _override_dbi_fetchrow_hashref($fetchrow_hashref)
+
+Overrides the C<fetchrow_hashref> method of C<DBI::st> in order to capture the rows returned.
+
+=head2 _override_dbi_fetchrow_arrayref($fetchrow_arrayref)
+
+Overrides the C<fetchrow_arrayref> method of C<DBI::st> in order to capture the rows returned.
+
+=head2 _override_dbi_fetchrow_array($fetchrow_array)
+
+Overrides the C<fetchrow_array> method of C<DBI::st> in order to capture the rows returned.
+
+=head2 _override_dbi_selectall_arrayref($selectall_arrayref)
+
+Overrides the C<selectall_arrayref> method of C<DBI::db> in order to capture the rows returned.
+
+=head2 _override_dbi_selectall_hashref($selectall_hashref)
+
+Overrides the C<selectall_hashref> method of C<DBI::db> in order to capture the rows returned.
+
+=head2 _override_dbi_selectcol_arrayref($selectcol_arrayref)
+
+Overrides the C<selectcol_arrayref> method of C<DBI::db> in order to capture the rows returned.
+
+=head2 _override_dbi_selectrow_array($selectrow_array)
+
+Overrides the C<selectrow_array> method of C<DBI::db> in order to capture the rows returned.
+
+=head2 _override_dbi_selectrow_arrayref($selectrow_arrayref)
+
+Overrides the C<selectrow_arrayref> method of C<DBI::db> in order to capture the rows returned.
+
+=head2 _override_dbi_selectrow_hashref($selectrow_hashref)
+
+Overrides the C<selectrow_hashref> method of C<DBI::db> in order to capture the rows returned.
+
+=head2 _get_current_record_column_names()
+
+Returns the column names of the current record being processed.
+
+=head2 _process_mock_data(\@data)
+
+Processes the mock data before setting up the mocked database handle.
+
+=head2 _set_fixtures_file($file)
+
+Sets the file path for the fixture file containing mocked data.
+
+=head2 _validate_args(\%args_for)
+
+Validates the arguments passed to the constructor.
+
+=head2 _write_fo_file()
+
+Writes the current results to the fixture file if override flag is set.
+
+=head2 _set_hashref_response($sth, $retval)
+
+Sets the response for hash references fetched from the database.
+
+=head1 AUTHOR
+
+Unknown
+
+=cut
