@@ -730,6 +730,11 @@ Sets the response for hash references fetched from the database.
 
 =head1 AUTHOR
 
-Unknown
+Dragos Trif <drd.trif@gmail.com>
+
+=head1 LICENSE
+
+This library is free software and may be distributed under the same terms
+as perl itself.
 
 =cut
