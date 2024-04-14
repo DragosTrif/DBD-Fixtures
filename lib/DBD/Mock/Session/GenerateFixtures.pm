@@ -1,4 +1,4 @@
-package DBD::Session::GenerateFixtures;
+package DBD::Mock::Session::GenerateFixtures;
 
 use strict;
 use warnings;

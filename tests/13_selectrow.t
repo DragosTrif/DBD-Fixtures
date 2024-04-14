@@ -6,7 +6,7 @@ use Test2::V0;
 use lib "lib";
 
 use MyDatabase 'db_handle';
-use DBDMockDumper;
+use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
 use feature 'say';
 
@@ -24,7 +24,7 @@ chomp $sql;
 
 subtest 'selectrow generate mock data' => sub {
 	note 'running selectrow_array';
-	my $obj = DBDMockDumper->new({dbh => db_handle('test.db')});
+	my $obj = DBD::Mock::Session::GenerateFixtures->new({dbh => db_handle('test.db')});
 
 	my $dbh = $obj->get_dbh();
 
@@ -63,7 +63,7 @@ subtest 'selectrow generate mock data' => sub {
 };
 
 subtest 'selectrow use mock data' => sub {
-	my $obj = DBDMockDumper->new();
+	my $obj = DBD::Mock::Session::GenerateFixtures->new();
 	my $dbh = $obj->get_dbh();
 
 	my $sth = $dbh->prepare($sql);

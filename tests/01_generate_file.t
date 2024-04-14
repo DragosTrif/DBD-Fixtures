@@ -6,11 +6,11 @@ use Test2::V0;
 use lib "lib";
 
 use MyDatabase 'db_handle';
-use DBD::Session::GenerateFixtures;
+use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
 use feature 'say';
 
-my $dbh = DBD::Session::GenerateFixtures->new({dbh => db_handle('test.db')})->get_dbh();
+my $dbh = DBD::Mock::Session::GenerateFixtures->new({dbh => db_handle('test.db')})->get_dbh();
 
 my $sql = <<"SQL";
 SELECT * FROM media_types WHERE id IN(?,?)

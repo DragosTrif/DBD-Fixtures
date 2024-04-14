@@ -6,11 +6,11 @@ use Test2::V0;
 use lib "lib";
 
 use MyDatabase 'db_handle';
-use DBDMockDumper;
+use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
 use feature 'say';
 
-my $dbh = DBDMockDumper->new({file => 'tests/db_fixtures/07_selectall_arrayref.t.json'})->get_dbh();
+my $dbh = DBD::Mock::Session::GenerateFixtures->new({file => 'tests/db_fixtures/07_selectall_arrayref.t.json'})->get_dbh();
 
 my $sql = <<"SQL";
 SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC
