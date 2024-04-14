@@ -47,7 +47,6 @@ sub new {
 		$self->_initialize();
 	}
 
-
 	return $self;
 }
 
@@ -80,7 +79,9 @@ sub _initialize {
 		$self->_process_mock_data($data);
 		$self->_set_mock_dbh($data);
 	} else {
-		croak 'No mocked data in ' . $self->{fixture_file} . ". Please provide dbh arg to new to generate this\n";
+		croak "No mocked data is available, you can resolve this by providing the 'dbh'
+		argument to the 'new' method to generate it. Alternatively, you can pass either
+		a file or data argument to the 'new' method";
 	}
 
 	return $self;
