@@ -34,6 +34,7 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	selectrow_array    => 'DBI::db::selectrow_array',
 	selectrow_arrayref => 'DBI::db::selectrow_arrayref',
 	selectrow_hashref  => 'DBI::db::selectrow_hashref',
+	do                 => 'DBI::db::do',
 );
 
 sub new {
@@ -121,6 +122,7 @@ sub _override_dbi_methods {
 	$self->_override_dbi_selectrow_array($MOCKED_DBI_METHODS{selectrow_array});
 	$self->_override_dbi_selectrow_arrayref($MOCKED_DBI_METHODS{selectrow_arrayref});
 	$self->_override_dbi_selectrow_hashref($MOCKED_DBI_METHODS{selectrow_hashref});
+	$self->_override_dbi_do($MOCKED_DBI_METHODS{do});
 
 	return $self;
 }
@@ -479,6 +481,38 @@ sub _override_dbi_selectrow_hashref {
 	);
 }
 
+sub _override_dbi_do {
+	my $self = shift;
+	my $do   = shift;
+
+	my $original_do = \&$do;
+
+	$self->get_override_object()->replace(
+		$do,
+		sub {
+			my ($dbh, $statement, $attr, @bind_values) = @_;
+
+			my $rows = $original_do->($dbh, $statement, $attr, @bind_values);
+
+			if ($rows && $rows ne "0E0") {
+
+				my $result = [];
+				foreach my $row (1 .. $rows) {
+					push @{$self->{result}->[-1]->{results}}, [];
+				}
+
+				unshift @{$self->{result}->[-1]->{results}}, ['rows'];
+				delete $self->{result}->[-1]->{col_names};
+				$self->_write_fo_file();
+			}
+
+			return $rows;
+		}
+	);
+
+	return $self;
+}
+
 sub _get_current_record_column_names {
 	my $self = shift;
 
@@ -489,10 +523,11 @@ sub _process_mock_data {
 	my ($self, $data) = @_;
 
 	foreach my $row (@{$data}) {
-		my $cols = delete $row->{col_names};
-		unshift @{$row->{results}}, $cols;
+		if ($row->{col_names}) {
+			my $cols = delete $row->{col_names};
+			unshift @{$row->{results}}, $cols;
+		}
 	}
-
 
 	return $self;
 }
