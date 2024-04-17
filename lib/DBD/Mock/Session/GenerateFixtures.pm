@@ -65,6 +65,7 @@ sub _initialize {
 	$self->{override_flag} = 0;
 
 	if (my $dbh = $args_for{dbh}) {
+		# die '????';
 		$self->{dbh}           = $dbh;
 		$override              = Sub::Override->new();
 		$self->{bind_params}   = [];
@@ -139,12 +140,22 @@ sub get_override_object {
 	return $self->{override};
 }
 
+sub restore_all {
+	my $self = shift;
+
+	foreach my $key (keys %MOCKED_DBI_METHODS) {
+		$self->get_override_object()->restore($MOCKED_DBI_METHODS{$key});
+	}
+
+	return $self;
+}
+
 sub _override_dbi_execute {
 	my $self        = shift;
 	my $dbi_execute = shift;
-
+	return if $self->{do};
 	my $orig_execute = \&$dbi_execute;
-
+	# die 'aaaa';
 	$self->get_override_object()->replace(
 		$dbi_execute,
 		sub {
@@ -162,6 +173,7 @@ sub _override_dbi_execute {
 
 			$query_data->{bound_params} = $self->{bind_params}
 				if scalar @{$self->{bind_params}} > 0;
+
 			push @{$self->{result}}, $query_data;
 			$self->_write_fo_file();
 			$self->{bind_params} = [];
@@ -209,8 +221,8 @@ sub _override_dbi_fetchrow_hashref {
 
 			if (ref $retval) {
 				my $query_results = $self->_set_hashref_response($sth, $retval);
-
 				push @{$self->{result}->[-1]->{results}}, $query_results;
+
 				$self->_write_fo_file();
 			}
 
@@ -485,6 +497,7 @@ sub _override_dbi_do {
 	my $self = shift;
 	my $do   = shift;
 
+	$self->{do} = 1;
 	my $original_do = \&$do;
 
 	$self->get_override_object()->replace(
@@ -492,25 +505,35 @@ sub _override_dbi_do {
 		sub {
 			my ($dbh, $statement, $attr, @bind_values) = @_;
 
-			my $rows = $original_do->($dbh, $statement, $attr, @bind_values);
+			my $sth = $dbh->prepare($statement, $attr) or return undef;
+			$sth->execute(@bind_values);
+			my $rows = $sth->rows();
+			# remove data added by execute;
+			$self->{result} = [grep {defined $_->{results}} @{$self->{result}}];
 
 			if ($rows && $rows ne "0E0") {
 
 				my $result = [];
 				foreach my $row (1 .. $rows) {
-					push @{$self->{result}->[-1]->{results}}, [];
+					push @{$result}, [];
 				}
 
-				unshift @{$self->{result}->[-1]->{results}}, ['rows'];
-				delete $self->{result}->[-1]->{col_names};
-				$self->_write_fo_file();
+				my $query_data = {
+					statement    => $statement,
+					bound_params => \@bind_values,
+					col_names    => $sth->{NAME},
+					results      => $result
+				};
+
+				push @{$self->{result}}, $query_data;
 			}
 
+			$self->_write_fo_file();
 			return $rows;
 		}
 	);
 
-	return $self;
+
 }
 
 sub _get_current_record_column_names {
@@ -558,9 +581,10 @@ sub _validate_args {
 		if ref $args_for ne 'HASH';
 
 	Readonly::Hash my %ALLOWED_KEYS => (
-		dbh  => 1,
-		file => 1,
-		data => 1,
+		dbh      => 1,
+		file     => 1,
+		data     => 1,
+		override => 1,
 	);
 
 	croak 'to many args to new' if scalar keys %{$args_for} > 1;
@@ -613,9 +637,10 @@ sub DESTROY {
 
 	my $result        = delete $self->{result};
 	my $override_flag = delete $self->{override_flag};
-	my $override      = delete $self->{override};
-	my $dbh           = delete $self->{dbh};
-	my $fixture_file  = delete $self->{fixture_file};
+
+	$override = delete $self->{override};
+	my $dbh          = delete $self->{dbh};
+	my $fixture_file = delete $self->{fixture_file};
 
 	return $self;
 }

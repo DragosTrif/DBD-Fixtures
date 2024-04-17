@@ -50,7 +50,7 @@ subtest 'selectrow generate mock data' => sub {
 	is($got, undef, 'selectrow_arrayref without sql an no rows found is ok');
 
 	note 'running selectrow_hashref';
-	my $got = $dbh->selectrow_hashref($sth, undef, (2, 1));
+	$got = $dbh->selectrow_hashref($sth, undef, (2, 1));
 	is($got, $expected_hash_ref, 'selectrow_hashref with sth prepare is ok');
 
 	$got = $dbh->selectrow_hashref($sql, undef, (2, 1));
@@ -90,7 +90,7 @@ subtest 'selectrow use mock data' => sub {
 
 	note 'running selectrow_hashref';
 
-	my $got = $dbh->selectrow_hashref($sth, undef, (2, 1));
+	$got = $dbh->selectrow_hashref($sth, undef, (2, 1));
 	is($got, $expected_hash_ref, 'selectrow_hashref with sth is ok');
 
 	$got = $dbh->selectrow_hashref($sql, undef, (2, 1));
