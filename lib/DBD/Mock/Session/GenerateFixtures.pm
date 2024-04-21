@@ -65,7 +65,6 @@ sub _initialize {
 	$self->{override_flag} = 0;
 
 	if (my $dbh = $args_for{dbh}) {
-		# die '????';
 		$self->{dbh}           = $dbh;
 		$override              = Sub::Override->new();
 		$self->{bind_params}   = [];
@@ -155,7 +154,7 @@ sub _override_dbi_execute {
 	my $dbi_execute = shift;
 	return if $self->{do};
 	my $orig_execute = \&$dbi_execute;
-	# die 'aaaa';
+
 	$self->get_override_object()->replace(
 		$dbi_execute,
 		sub {
@@ -177,6 +176,7 @@ sub _override_dbi_execute {
 			push @{$self->{result}}, $query_data;
 			$self->_write_fo_file();
 			$self->{bind_params} = [];
+			$self->{sth} = $sth;
 			return $retval;
 		}
 	);
@@ -505,10 +505,7 @@ sub _override_dbi_do {
 		sub {
 			my ($dbh, $statement, $attr, @bind_values) = @_;
 
-			my $sth = $dbh->prepare($statement, $attr) or return undef;
-			$sth->execute(@bind_values);
-			my $rows = $sth->rows();
-			# remove data added by execute;
+			my $rows = $original_do->($dbh, $statement, $attr, @bind_values);
 			$self->{result} = [grep {defined $_->{results}} @{$self->{result}}];
 
 			if ($rows && $rows ne "0E0") {
@@ -521,7 +518,7 @@ sub _override_dbi_do {
 				my $query_data = {
 					statement    => $statement,
 					bound_params => \@bind_values,
-					col_names    => $sth->{NAME},
+					col_names    => $self->{sth}->{NAME},
 					results      => $result
 				};
 
@@ -610,7 +607,7 @@ sub _write_fo_file {
 	if ($override_flag && scalar @{$result}) {
 		my $json_data = $JSON_OBJ->encode($result);
 		my $fh        = IO::File->new($fixture_file, 'w') or croak "cannot open file:$fixture_file  $!\n";
-		say $fh $json_data;
+
 		$fh->close or croak "cannot close file:$fixture_file  $!\n";
 		undef $fh;
 	}
