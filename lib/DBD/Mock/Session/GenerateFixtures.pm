@@ -34,7 +34,6 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	selectrow_array    => 'DBI::db::selectrow_array',
 	selectrow_arrayref => 'DBI::db::selectrow_arrayref',
 	selectrow_hashref  => 'DBI::db::selectrow_hashref',
-	do                 => 'DBI::db::do',
 );
 
 sub new {
@@ -122,7 +121,6 @@ sub _override_dbi_methods {
 	$self->_override_dbi_selectrow_array($MOCKED_DBI_METHODS{selectrow_array});
 	$self->_override_dbi_selectrow_arrayref($MOCKED_DBI_METHODS{selectrow_arrayref});
 	$self->_override_dbi_selectrow_hashref($MOCKED_DBI_METHODS{selectrow_hashref});
-	$self->_override_dbi_do($MOCKED_DBI_METHODS{do});
 
 	return $self;
 }
@@ -162,12 +160,20 @@ sub _override_dbi_execute {
 
 			my $sql = $sth->{Statement};
 
-			my $col_names  = $sth->{NAME};
-			my $retval     = $orig_execute->($sth, @args);
+			my $col_names = $sth->{NAME};
+			my $retval    = $orig_execute->($sth, @args);
+
+			my $rows   = $sth->rows();
+			my $result = [];
+			foreach my $row (1 .. $rows) {
+				push @{$result}, [];
+			}
+
 			my $query_data = {
 				statement    => $sql,
 				bound_params => \@args,
-				col_names    => $col_names
+				col_names    => $col_names,
+				results      => $result,      # override this for selects
 			};
 
 			$query_data->{bound_params} = $self->{bind_params}
@@ -176,7 +182,7 @@ sub _override_dbi_execute {
 			push @{$self->{result}}, $query_data;
 			$self->_write_fo_file();
 			$self->{bind_params} = [];
-			$self->{sth} = $sth;
+			$self->{sth}         = $sth;
 			return $retval;
 		}
 	);
@@ -222,7 +228,6 @@ sub _override_dbi_fetchrow_hashref {
 			if (ref $retval) {
 				my $query_results = $self->_set_hashref_response($sth, $retval);
 				push @{$self->{result}->[-1]->{results}}, $query_results;
-
 				$self->_write_fo_file();
 			}
 
@@ -493,46 +498,6 @@ sub _override_dbi_selectrow_hashref {
 	);
 }
 
-sub _override_dbi_do {
-	my $self = shift;
-	my $do   = shift;
-
-	$self->{do} = 1;
-	my $original_do = \&$do;
-
-	$self->get_override_object()->replace(
-		$do,
-		sub {
-			my ($dbh, $statement, $attr, @bind_values) = @_;
-
-			my $rows = $original_do->($dbh, $statement, $attr, @bind_values);
-			$self->{result} = [grep {defined $_->{results}} @{$self->{result}}];
-
-			if ($rows && $rows ne "0E0") {
-
-				my $result = [];
-				foreach my $row (1 .. $rows) {
-					push @{$result}, [];
-				}
-
-				my $query_data = {
-					statement    => $statement,
-					bound_params => \@bind_values,
-					col_names    => $self->{sth}->{NAME},
-					results      => $result
-				};
-
-				push @{$self->{result}}, $query_data;
-			}
-
-			$self->_write_fo_file();
-			return $rows;
-		}
-	);
-
-
-}
-
 sub _get_current_record_column_names {
 	my $self = shift;
 
@@ -607,7 +572,7 @@ sub _write_fo_file {
 	if ($override_flag && scalar @{$result}) {
 		my $json_data = $JSON_OBJ->encode($result);
 		my $fh        = IO::File->new($fixture_file, 'w') or croak "cannot open file:$fixture_file  $!\n";
-
+		say $fh $json_data;
 		$fh->close or croak "cannot close file:$fixture_file  $!\n";
 		undef $fh;
 	}
