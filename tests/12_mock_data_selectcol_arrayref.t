@@ -3,8 +3,8 @@ use warnings;
 
 use Test2::V0;
 
-use lib "lib";
-use MyDatabase 'db_handle';
+use lib qw(lib tests);
+
 use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
 use feature 'say';

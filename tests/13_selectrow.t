@@ -3,9 +3,9 @@ use warnings;
 
 use Test2::V0;
 
-use lib "lib";
+use lib qw(lib tests);
 
-use MyDatabase 'db_handle';
+use MyDatabase qw(db_handle build_tests_db populate_test_db);
 use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
 use feature 'say';
@@ -24,9 +24,15 @@ chomp $sql;
 
 subtest 'selectrow generate mock data' => sub {
 	note 'running selectrow_array';
-	my $obj = DBD::Mock::Session::GenerateFixtures->new({dbh => db_handle('test.db')});
 
-	my $dbh = $obj->get_dbh();
+	my $dbh = db_handle('test.db');
+
+	build_tests_db($dbh);
+	populate_test_db($dbh);
+
+	my $obj = DBD::Mock::Session::GenerateFixtures->new({dbh => $dbh});
+
+	$dbh = $obj->get_dbh();
 
 	my $sth = $dbh->prepare($sql);
 	my @got = $dbh->selectrow_array($sth, undef, (2, 1));

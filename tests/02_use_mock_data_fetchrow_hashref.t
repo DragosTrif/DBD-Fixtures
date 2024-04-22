@@ -3,9 +3,8 @@ use warnings;
 
 use Test2::V0;
 
-use lib "lib";
+use lib qw(lib tests);
 
-use MyDatabase 'db_handle';
 use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
 use feature 'say';
@@ -149,5 +148,4 @@ subtest 'no rows returned' => sub {
 };
 
 $dbh->disconnect();
-
 done_testing();
