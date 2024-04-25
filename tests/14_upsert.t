@@ -29,14 +29,25 @@ INSERT INTO licenses (name, allows_commercial) VALUES ( ?, ? )
 SQL
 
 	chomp $sql_license;
-    my $r = $dbh->do($sql_license, undef, 'test_license', 'no');
-	is( $r, 1, 'one row inserted is ok');
-    
+	my $r = $dbh->do($sql_license, undef, 'test_license', 'no');
+	is($r, 1, 'one row inserted is ok');
+
 	my $update_sql = 'update licenses set allows_commercial = ? where id > ?';
 	$r = $dbh->do($update_sql, undef, 'yes', '3');
-	is($r, 2);
-    $obj->restore_all();
-    $dbh->disconnect();
+	is($r, 2, 'update works ok');
+
+	$r = $dbh->do($update_sql, undef, 'yes', '100');
+
+	is($r, '0E0', 'now rows updated');
+
+	my $delete_sql = 'DELETE FROM licenses WHERE id = ?';
+	my $sth        = $dbh->prepare($delete_sql);
+	$sth->execute(3);
+
+	is($sth->rows(), 1, 'delete with prepare and execute is ok');
+
+	$obj->restore_all();
+	$dbh->disconnect();
 };
 
 subtest 'upsert use mock data' => sub {
@@ -50,9 +61,20 @@ SQL
 	chomp $sql_license;
 	is($dbh_2->do($sql_license, undef, 'test_license', 'no'), 1, 'one row inserted is ok');
 	my $update_sql = 'update licenses set allows_commercial = ? where id > ?';
-	my $r = $dbh_2->do($update_sql, undef, 'yes', '3');
-	is($r, 2);
-     $dbh_2->disconnect();
+	my $r          = $dbh_2->do($update_sql, undef, 'yes', '3');
+
+	is($r, 2, 'update works ok');
+
+	$r = $dbh_2->do($update_sql, undef, 'yes', '100');
+	is($r, '0E0', 'now rows updated');
+
+	my $delete_sql = 'DELETE FROM licenses WHERE id = ?';
+	my $sth        = $dbh_2->prepare($delete_sql);
+	$sth->execute(3);
+
+	is($sth->rows(), 1, 'delete with prepare and execute is ok');
+
+	$dbh_2->disconnect();
 };
 
 rmtree './tests/db_fixtures';

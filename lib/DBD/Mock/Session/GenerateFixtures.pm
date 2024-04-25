@@ -150,7 +150,7 @@ sub restore_all {
 sub _override_dbi_execute {
 	my $self        = shift;
 	my $dbi_execute = shift;
-	return if $self->{do};
+	# return if $self->{do};
 	my $orig_execute = \&$dbi_execute;
 
 	$self->get_override_object()->replace(
@@ -163,18 +163,20 @@ sub _override_dbi_execute {
 			my $col_names = $sth->{NAME};
 			my $retval    = $orig_execute->($sth, @args);
 
-			my $rows   = $sth->rows();
-			my $result = [];
-			foreach my $row (1 .. $rows) {
-				push @{$result}, [];
-			}
-
+			my $rows       = $sth->rows();
 			my $query_data = {
 				statement    => $sql,
 				bound_params => \@args,
 				col_names    => $col_names,
-				results      => $result,      # override this for selects
 			};
+
+			my $result = [];
+			if ($rows > 0) {
+				foreach my $row (1 .. $rows) {
+					push @{$result}, [];
+				}
+				$query_data->{results} = $result;
+			}
 
 			$query_data->{bound_params} = $self->{bind_params}
 				if scalar @{$self->{bind_params}} > 0;
