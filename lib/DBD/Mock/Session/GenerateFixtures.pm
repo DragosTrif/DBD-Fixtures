@@ -150,7 +150,7 @@ sub restore_all {
 sub _override_dbi_execute {
 	my $self        = shift;
 	my $dbi_execute = shift;
-	# return if $self->{do};
+	
 	my $orig_execute = \&$dbi_execute;
 
 	$self->get_override_object()->replace(
@@ -668,6 +668,14 @@ Returns the mocked database handle object.
 =head2 get_override_object()
 
 Returns the override object used for mocking DBI methods.
+
+=head2 restore_all()
+
+Restores all overridden DBI methods to their original implementations.
+
+This method is used to revert all DBI method overrides set up for mocking database interactions back to their original implementations.
+
+Returns the current object.
 
 =head1 PRIVATE METHODS
 
