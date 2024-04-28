@@ -182,7 +182,7 @@ sub _override_dbi_execute {
 				if scalar @{$self->{bind_params}} > 0;
 
 			push @{$self->{result}}, $query_data;
-			$self->_write_fo_file();
+			$self->_write_to_file();
 			$self->{bind_params} = [];
 			$self->{sth}         = $sth;
 			return $retval;
@@ -230,7 +230,7 @@ sub _override_dbi_fetchrow_hashref {
 			if (ref $retval) {
 				my $query_results = $self->_set_hashref_response($sth, $retval);
 				push @{$self->{result}->[-1]->{results}}, $query_results;
-				$self->_write_fo_file();
+				$self->_write_to_file();
 			}
 
 			return $retval;
@@ -257,7 +257,7 @@ sub _override_dbi_fetchrow_arrayref {
 			if (ref $retval) {
 				@retval = @{$retval};
 				push @{$self->{result}->[-1]->{results}}, \@retval;
-				$self->_write_fo_file();
+				$self->_write_to_file();
 			}
 
 			return $retval;
@@ -282,7 +282,7 @@ sub _override_dbi_fetchrow_array {
 
 			if (scalar @retval) {
 				push @{$self->{result}->[-1]->{results}}, \@retval;
-				$self->_write_fo_file();
+				$self->_write_to_file();
 			}
 
 			return @retval;
@@ -319,7 +319,7 @@ sub _override_dbi_selectall_arrayref {
 					push @{$data}, $row_as_array;
 				}
 				$self->{result}->[-1]->{results} = $data;
-				$self->_write_fo_file();
+				$self->_write_to_file();
 			}
 
 			return $retval;
@@ -351,7 +351,7 @@ sub _override_dbi_selectall_hashref {
 				if (ref $rows && scalar keys %{$rows} == scalar @{$col_names}) {
 					my %data = %$rows;
 					push @{$mock_data}, [@data{@{$col_names}}];
-					$self->_write_fo_file();
+					$self->_write_to_file();
 				}
 
 				return;
@@ -391,7 +391,7 @@ sub _override_dbi_selectcol_arrayref {
 			}
 
 			$self->{result}->[-1]->{results} = $mocked_data;
-			$self->_write_fo_file();
+			$self->_write_to_file();
 			return $retval;
 		}
 	);
@@ -429,7 +429,7 @@ sub _override_dbi_selectrow_array {
 
 			push @{$self->{result}}, $query_data;
 
-			$self->_write_fo_file();
+			$self->_write_to_file();
 			return @retval;
 		}
 	);
@@ -464,7 +464,7 @@ sub _override_dbi_selectrow_arrayref {
 			};
 
 			push @{$self->{result}}, $query_data;
-			$self->_write_fo_file();
+			$self->_write_to_file();
 
 			return $retval;
 		}
@@ -561,7 +561,7 @@ sub _validate_args {
 	return $self;
 }
 
-sub _write_fo_file {
+sub _write_to_file {
 	my $self = shift;
 
 	my $result        = $self->{result};
@@ -753,7 +753,7 @@ Sets the file path for the fixture file containing mocked data.
 
 Validates the arguments passed to the constructor.
 
-=head2 _write_fo_file()
+=head2 _write_to_file()
 
 Writes the current results to the fixture file if override flag is set.
 
