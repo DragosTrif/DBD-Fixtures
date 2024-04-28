@@ -3,7 +3,7 @@ use warnings;
 
 use Test2::V0;
 
-use lib qw(lib tests);
+use lib qw(lib t);
 
 use MyDatabase qw(db_handle build_tests_db populate_test_db);
 use DBD::Mock::Session::GenerateFixtures;
@@ -69,7 +69,7 @@ subtest 'selectrow generate mock data' => sub {
 };
 
 subtest 'selectrow use mock data' => sub {
-	my $obj = DBD::Mock::Session::GenerateFixtures->new();
+	my $obj = DBD::Mock::Session::GenerateFixtures->new({file => './t/db_fixtures/13_selectrow.t.json'});
 	my $dbh = $obj->get_dbh();
 
 	my $sth = $dbh->prepare($sql);

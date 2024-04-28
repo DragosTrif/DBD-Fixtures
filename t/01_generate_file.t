@@ -3,7 +3,7 @@ use warnings;
 
 use Test2::V0;
 
-use lib qw(lib tests);
+use lib qw(lib t);
 
 use MyDatabase qw(db_handle build_tests_db populate_test_db);
 use DBD::Mock::Session::GenerateFixtures;

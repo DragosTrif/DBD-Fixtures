@@ -4,7 +4,7 @@ use warnings;
 use Test2::V0;
 use File::Path qw(rmtree);
 
-use lib qw(lib tests);
+use lib qw(lib t);
 
 use MyDatabase qw(db_handle build_tests_db populate_test_db);
 
@@ -51,7 +51,7 @@ SQL
 };
 
 subtest 'upsert use mock data' => sub {
-	my $obj_2 = DBD::Mock::Session::GenerateFixtures->new({override => 0});
+	my $obj_2 = DBD::Mock::Session::GenerateFixtures->new({file => './t/db_fixtures/14_upsert.t.json'});
 	my $dbh_2 = $obj_2->get_dbh();
 
 	my $sql_license = <<"SQL";
@@ -77,6 +77,6 @@ SQL
 	$dbh_2->disconnect();
 };
 
-rmtree './tests/db_fixtures';
+rmtree './t/db_fixtures';
 
 done_testing();

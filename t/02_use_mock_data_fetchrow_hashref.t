@@ -3,7 +3,7 @@ use warnings;
 
 use Test2::V0;
 
-use lib qw(lib tests);
+use lib qw(lib t);
 
 use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
@@ -11,7 +11,7 @@ use feature 'say';
 
 note 'use mock data for fetchrow_hashref';
 
-my $dbh = DBD::Mock::Session::GenerateFixtures->new({file => './tests/db_fixtures/01_generate_file.t.json'})->get_dbh();
+my $dbh = DBD::Mock::Session::GenerateFixtures->new({file => './t/db_fixtures/01_generate_file.t.json'})->get_dbh();
 
 
 my $sql = <<"SQL";
