@@ -14,7 +14,7 @@ my $dbh = db_handle('test.db');
 
 build_tests_db($dbh);
 populate_test_db($dbh);
-my $dbh = DBD::Mock::Session::GenerateFixtures->new({dbh => $dbh})->get_dbh();
+$dbh = DBD::Mock::Session::GenerateFixtures->new({dbh => $dbh})->get_dbh();
 
 my $sql = <<"SQL";
 SELECT * FROM media_types WHERE id IN(?,?) ORDER BY id DESC

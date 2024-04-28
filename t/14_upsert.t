@@ -2,7 +2,6 @@ use strict;
 use warnings;
 
 use Test2::V0;
-use File::Path qw(rmtree);
 
 use lib qw(lib t);
 
@@ -76,7 +75,5 @@ SQL
 
 	$dbh_2->disconnect();
 };
-
-rmtree './t/db_fixtures';
 
 done_testing();

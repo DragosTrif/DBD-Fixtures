@@ -6,7 +6,6 @@ use warnings;
 use Carp 'croak';
 use DBD::Mock;
 
-use Data::Dumper;
 use feature 'say';
 
 use Sub::Override;
@@ -15,9 +14,10 @@ use File::Path qw(make_path);
 use Cpanel::JSON::XS;
 use File::Slurper qw (read_text);
 use File::Spec;
-use Carp qw( croak );
 use Readonly;
 use Data::Walk;
+
+our $VERSION = 0.01;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -760,6 +760,10 @@ Writes the current results to the fixture file if override flag is set.
 =head2 _set_hashref_response($sth, $retval)
 
 Sets the response for hash references fetched from the database.
+
+=head1 REPOSITORY
+
+L<DBD-Fixtures|https://github.com/DragosTrif/DBD-Fixtures>
 
 =head1 AUTHOR
 
