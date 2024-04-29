@@ -6,7 +6,7 @@ use Test2::V0;
 use lib qw(lib t);
 
 use DBD::Mock::Session::GenerateFixtures;
-use Data::Dumper;
+
 use feature 'say';
 
 use Data::Walk;

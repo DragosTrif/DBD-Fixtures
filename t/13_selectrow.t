@@ -7,7 +7,7 @@ use lib qw(lib t);
 
 use MyDatabase qw(db_handle build_tests_db populate_test_db);
 use DBD::Mock::Session::GenerateFixtures;
-use Data::Dumper;
+
 use feature 'say';
 
 

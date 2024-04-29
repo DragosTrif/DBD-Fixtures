@@ -6,7 +6,7 @@ use Test2::V0;
 use lib qw(lib t);
 
 use DBD::Mock::Session::GenerateFixtures;
-use Data::Dumper;
+
 use feature 'say';
 
 my $dbh = DBD::Mock::Session::GenerateFixtures->new({file => './t/db_fixtures/05_fetchrow_array.t.json'})->get_dbh();
