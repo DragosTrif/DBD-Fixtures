@@ -29,7 +29,7 @@ This not a part form DBD::Mock::Session distribution just a wrapper around it.
 `
 # Instalation
 	
-1. git clone [DBD-Fixtures](git@github.com:DragosTrif/DBD-Fixtures.git) 
+1. git clone [Fixtures](git@github.com:DragosTrif/DBD-Fixtures.git)
 2. perl Makefile.PL
 3. make test
 4. make install 
