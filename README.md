@@ -7,8 +7,7 @@ This not a part form DBD::Mock::Session distribution just a wrapper around it.
 # SYNOPSIS
 
 `
-	# Case 1: Providing a pre-existing DBI database handle for genereting a mocked data files
-	# with the test name
+	# Case 1: Providing a pre-existing DBI database handle for genereting a mocked data files with the test name
 	my $mock_dumper = DBD::Mock::Session::GenerateFixtures->new({ dbh => $dbh });
 	my $real_dbh = $mock_dumper->get_dbh();
 
