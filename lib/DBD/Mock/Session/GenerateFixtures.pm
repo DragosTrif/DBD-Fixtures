@@ -17,7 +17,7 @@ use File::Spec;
 use Readonly;
 use Data::Walk;
 
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -613,9 +613,7 @@ sub DESTROY {
 
 =head1 NAME
 
-DBD::Mock::Session::GenerateFixtures - When a real DBI database handle ($dbh) is provided, the module generates DBD::Mock::Session data.
-Otherwise, it returns a DBD::Mock::Session object populated with generated data.
-This not a part form DBD::Mock::Session distribution just a wrapper around it.
+DBD::Mock::Session::GenerateFixtures
 
 =head1 SYNOPSIS
 
@@ -641,7 +639,10 @@ This not a part form DBD::Mock::Session distribution just a wrapper around it.
 
 =head1 DESCRIPTION
 
-The C<DBD::Mock::Session::GenerateFixtures> module provides functionalities for mocking C<DBD::Mock> for testing purposes.
+When a real DBI database handle ($dbh) is provided, the module generates C<DBD::Mock::Session> data and stores it in a JSON file. 
+After the data is generated, remove the 'dbh' argument from the constructor, and it will use the previously generated data to create a 'DBD::Mock::Session' database handle. 
+Mocked data can also be loaded from a custom file or as a data structure.
+This is not a part of the DBD::Mock::Session distribution; it's just a wrapper around it."
 
 =head1 METHODS
 
