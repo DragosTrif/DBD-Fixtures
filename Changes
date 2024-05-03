@@ -3,4 +3,4 @@
 0.03    2024-04-30
     - no changes, add Exporter::NoWork to Makefile.PL
 0.04    2024-04-30
-    - no changes, 
+    - no changes, add abstarct Makefile.PL and changes file
