@@ -26,7 +26,7 @@ This not a part form DBD::Mock::Session distribution just a wrapper around it.
 	my $dbh = $mock_dumper->get_dbh();
 	# Your code using the mock DBD
 ```
-# Instalation
+# Installation
 	
 1. git clone git@github.com:DragosTrif/DBD-Fixtures.git
 2. perl Makefile.PL
