@@ -433,6 +433,8 @@ sub _override_dbi_selectrow_array {
 			return @retval;
 		}
 	);
+
+	return $self;
 }
 
 sub _override_dbi_selectrow_arrayref {
@@ -469,6 +471,8 @@ sub _override_dbi_selectrow_arrayref {
 			return $retval;
 		}
 	);
+
+	return $self;
 }
 
 sub _override_dbi_selectrow_hashref {
@@ -498,6 +502,8 @@ sub _override_dbi_selectrow_hashref {
 			return $retval;
 		}
 	);
+
+	return $self;
 }
 
 sub _get_current_record_column_names {
