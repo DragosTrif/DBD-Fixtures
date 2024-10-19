@@ -1,0 +1,44 @@
+[
+   {
+      "bound_params" : [
+         "test_license",
+         "no"
+      ],
+      "col_names" : [],
+      "statement" : "INSERT INTO licenses (name, allows_commercial) VALUES ( ?, ? )",
+      "results" : [
+         []
+      ]
+   },
+   {
+      "col_names" : [],
+      "bound_params" : [
+         "yes",
+         "3"
+      ],
+      "statement" : "update licenses set allows_commercial = ? where id > ?",
+      "results" : [
+         [],
+         []
+      ]
+   },
+   {
+      "statement" : "update licenses set allows_commercial = ? where id > ?",
+      "col_names" : [],
+      "bound_params" : [
+         "yes",
+         "100"
+      ]
+   },
+   {
+      "statement" : "DELETE FROM licenses WHERE id = ?",
+      "results" : [
+         []
+      ],
+      "col_names" : [],
+      "bound_params" : [
+         3
+      ]
+   }
+]
+
