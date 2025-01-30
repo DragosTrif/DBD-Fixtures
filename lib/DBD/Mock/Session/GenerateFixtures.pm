@@ -674,6 +674,26 @@ DBD::Mock::Session::GenerateFixtures
 	my $dbh = $mock_dumper->get_dbh();
 	# Your code using the mock DBD
 
+	# or with Rose::DB
+
+	my $mock_dumper = DBD::Mock::Session::GenerateFixtures->new();
+
+	my $override = Sub::Override->new();
+	my $dbh      = $mock_dumper->get_dbh();
+	$dbh->{mock_start_insert_id} = 3;
+
+	$override->replace('Rose::DB::dbh' => sub {return $dbh});
+	$override->inject('DBD::Mock::db::last_insert_rowid', sub {$dbh->{mock_last_insert_id}});
+
+	my $num_rows_updated = DB::Media::Manager->update_media(
+		set => {
+			location => '/data/music/claire_de_lune.ogg',
+		},
+		where => [
+			id => 2,
+		],
+	);
+
 =head1 DESCRIPTION
 
 When a real DBI database handle ($dbh) is provided, the module generates C<DBD::Mock::Session> data and stores it in a JSON file. 

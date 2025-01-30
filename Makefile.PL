@@ -9,7 +9,7 @@ version_from 'lib/DBD/Mock/Session/GenerateFixtures.pm';
 
 requires 'Carp'                           => '1.52';
 requires 'DBD::Mock'                      => '1.59';
-requires 'Sub::Override'                  => '0.10';
+requires 'Sub::Override'                  => '0.12';
 requires 'English'                        => '1.11';
 requires 'File::Path'                     => '2.18';
 requires 'Cpanel::JSON::XS'               => '4.37';
@@ -26,5 +26,6 @@ test_requires 'Rose::DB'                  => '0.786';
 test_requires 'Rose::DB::Object'          => '0.822';
 test_requires 'Rose::DB::Object::Manager' => '0.813';
 test_requires 'Rose::DB::Object::Loader'  => '0.799';
+test_requires 'Sub::Override'             => '0.12';
 
 WriteAll;
