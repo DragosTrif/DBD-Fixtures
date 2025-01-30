@@ -17,7 +17,7 @@ use File::Spec;
 use Readonly;
 use Data::Walk;
 
-our $VERSION = 0.04;
+our $VERSION = 0.05;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -34,6 +34,7 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	selectrow_array    => 'DBI::db::selectrow_array',
 	selectrow_arrayref => 'DBI::db::selectrow_arrayref',
 	selectrow_hashref  => 'DBI::db::selectrow_hashref',
+	fetch              => 'DBI::st::fetch',
 );
 
 sub new {
@@ -121,6 +122,7 @@ sub _override_dbi_methods {
 	$self->_override_dbi_selectrow_array($MOCKED_DBI_METHODS{selectrow_array});
 	$self->_override_dbi_selectrow_arrayref($MOCKED_DBI_METHODS{selectrow_arrayref});
 	$self->_override_dbi_selectrow_hashref($MOCKED_DBI_METHODS{selectrow_hashref});
+	$self->_override_dbi_fecth($MOCKED_DBI_METHODS{fetch});
 
 	return $self;
 }
@@ -150,7 +152,7 @@ sub restore_all {
 sub _override_dbi_execute {
 	my $self        = shift;
 	my $dbi_execute = shift;
-	
+
 	my $orig_execute = \&$dbi_execute;
 
 	$self->get_override_object()->replace(
@@ -227,7 +229,7 @@ sub _override_dbi_fetchrow_hashref {
 
 			my $retval = $orig_selectrow_hashref->($sth);
 
-			if (ref $retval) {
+			if (ref $retval && !defined $self->{result}->[-1]->{results}) {
 				my $query_results = $self->_set_hashref_response($sth, $retval);
 				push @{$self->{result}->[-1]->{results}}, $query_results;
 				$self->_write_to_file();
@@ -506,6 +508,35 @@ sub _override_dbi_selectrow_hashref {
 	return $self;
 }
 
+sub _override_dbi_fecth {
+	my $self  = shift;
+	my $fetch = shift;
+
+	my $original_fetch = \&$fetch;
+	my $result         = [];
+	$self->get_override_object()->replace(
+		$fetch,
+		sub {
+			my ($sth, @args) = @_;
+			my $row = $original_fetch->($sth, @args);
+			if (ref $row) {
+				my @shallow_copy = @{$row};
+				if ($sth->{Statement} =~ /WHERE/i && $sth->{Statement} !~ /ORDER BY/i) {
+					unshift @{$self->{result}->[-1]->{results}}, \@shallow_copy;
+				} else {
+					push @{$self->{result}->[-1]->{results}}, \@shallow_copy;
+				}
+				$self->_write_to_file();
+			}
+
+
+			return $row;
+		}
+	);
+
+	return $self;
+}
+
 sub _get_current_record_column_names {
 	my $self = shift;
 
@@ -743,6 +774,10 @@ Overrides the C<selectrow_arrayref> method of C<DBI::db> in order to capture the
 =head2 _override_dbi_selectrow_hashref($selectrow_hashref)
 
 Overrides the C<selectrow_hashref> method of C<DBI::db> in order to capture the rows returned.
+
+=head2 _override_dbi_fecth($sth, @args)
+
+Overrides the C<fetch> method of C<DBI::st>
 
 =head2 _get_current_record_column_names()
 
