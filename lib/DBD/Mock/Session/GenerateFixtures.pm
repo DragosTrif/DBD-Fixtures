@@ -873,6 +873,30 @@ Overrides the C<selectrow_hashref> method of C<DBI::db> in order to capture the 
 
 Overrides the C<fetch> method of C<DBI::st>
 
+=head2 _override_dbi_prepare
+
+  _override_dbi_prepare($prepare);
+
+  This method overrides the `DBI::db::prepare` method. It customizes how SQL statements are prepared for execution
+
+=head2 _override_dbi_prepare_cached
+
+	_override_dbi_prepare_cached($prepare_cached);
+
+	This method overrides the `DBI::db::prepare_cached` method. It provides a mechanism for caching prepared statements to optimize repeated queries.
+
+=head2 _override_dbi_mocked_prepare
+
+	_override_dbi_mocked_prepare($mocked_prepare);
+
+	This method overrides the `DBD::Mock::db::prepare` method. It is used for testing purposes to mock the behavior of statement preparation.
+
+=head2 _normalize_sql
+
+	_normalize_sql($sql);
+
+	This method normalizes an SQL query string by removing extra whitespace and trimming leading or trailing spaces.
+
 =head2 _get_current_record_column_names()
 
 Returns the column names of the current record being processed.
