@@ -173,7 +173,8 @@ sub _override_dbi_execute {
 			try {
 				$col_names = $sth->{NAME};
 			} catch {
-
+				my $error = $_;
+				say  $error;
 			};
 
 			my $rows       = $sth->rows();
