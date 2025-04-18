@@ -18,7 +18,7 @@ use Readonly;
 use Data::Walk;
 use Try::Tiny;
 
-our $VERSION = 0.07;
+our $VERSION = 0.08;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -724,7 +724,7 @@ sub DESTROY {
 
 =head1 NAME
 
-DBD::Mock::Session::GenerateFixtures
+DBD::Mock::Session::GenerateFixtures - A module to generate fixtures for DBD::Mock::Session
 
 =head1 SYNOPSIS
 

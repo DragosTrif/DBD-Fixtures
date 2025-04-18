@@ -32,6 +32,8 @@ test_requires 'Rose::DB::Object::Loader'  => '0.799';
 test_requires 'Sub::Override'             => '0.12';
 test_requires 'Try::Tiny'                 => '0.32';
 test_requires 'autodie'                   => '2.37';
-test_requires  'Test::mysqld'             => '1.0030';
+test_requires 'DBD::mysql'                => '5.012';
+test_requires 'Rose::DB::MySQL'           => '0.774';
+test_requires 'Test::mysqld'              => '1.0030';
 
 WriteAll;
