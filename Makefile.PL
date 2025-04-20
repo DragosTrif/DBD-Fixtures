@@ -7,6 +7,25 @@ repository 'https://github.com/DragosTrif/DBD-Fixtures';
 all_from 'lib/DBD/Mock/Session/GenerateFixtures.pm';
 version_from 'lib/DBD/Mock/Session/GenerateFixtures.pm';
 
+
+# Check for required system dependencies
+print "Checking system dependencies...\n";
+
+# Check if 'mysqld' is installed
+my $mysqld_check = system("which mysqld > /dev/null 2>&1");
+# if ($mysqld_check != 0) {
+#     die <<'END';
+# Error: MySQL server (mysqld) is not installed or not in PATH.
+
+# Please install it manually before proceeding. On Ubuntu, you can run:
+#     sudo apt update
+#     sudo apt install -y libmysqlclient-dev
+#     sudo apt install -y mysql-server
+
+# END
+# }
+
+
 perl_version => '5.14.4';
 
 requires 'Carp'                           => '1.52';
@@ -32,8 +51,12 @@ test_requires 'Rose::DB::Object::Loader'  => '0.799';
 test_requires 'Sub::Override'             => '0.12';
 test_requires 'Try::Tiny'                 => '0.32';
 test_requires 'autodie'                   => '2.37';
-test_requires 'DBD::mysql'                => '5.012';
-test_requires 'Rose::DB::MySQL'           => '0.774';
-test_requires 'Test::mysqld'              => '1.0030';
+
+
+if ($mysqld_check == 0) {
+    test_requires 'DBD::mysql'                => '5.012';
+    test_requires 'Rose::DB::MySQL'           => '0.774';
+    test_requires 'Test::mysqld'              => '1.0030';
+}
 
 WriteAll;

@@ -13,6 +13,12 @@ use Rose::DB::Object::Loader;
 use Sub::Override;
 use File::Path qw(rmtree);
 
+my $mysqld_check = system("which mysqld > /dev/null 2>&1");
+
+if ($mysqld_check != 0) {
+	plan skip_all => "mysqld is not installed or not in PATH";
+}
+
 my $override = Sub::Override->new();
 
 

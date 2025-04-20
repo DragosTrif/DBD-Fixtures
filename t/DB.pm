@@ -26,26 +26,32 @@ __PACKAGE__->register_db(
 	}
 );
 
-our $mysqld = Test::mysqld->new(
-	my_cnf => {
-		'skip-networking' => '',
-		'user'            => $ENV{USER},
-	}
-) or die "Failed to start Test::mysqld: $Test::mysqld::errstr";
+my $mysqld_check = system("which mysqld > /dev/null 2>&1");
+
+if ($mysqld_check == 0) {
+	require Test::mysqld;
+	our $mysqld = Test::mysqld->new(
+		my_cnf => {
+			'skip-networking' => '',
+			'user'            => $ENV{USER} // 'root',
+		}
+	) or die "Failed to start Test::mysqld: $Test::mysqld::errstr";
 
 
-__PACKAGE__->register_db(
-	domain          => 'mysql_test',
-	type            => 'mysql_test',
-	driver          => 'mysql',
-	dsn             => $mysqld->dsn(dbname => 'test'),
-	username        => 'root',
-	password        => '',
-	connect_options => {
-		RaiseError => 1,
-		AutoCommit => 1,
-		PrintError => 0,
-	}
-);
+	__PACKAGE__->register_db(
+		domain          => 'mysql_test',
+		type            => 'mysql_test',
+		driver          => 'mysql',
+		dsn             => $mysqld->dsn(dbname => 'test'),
+		username        => 'root',
+		password        => '',
+		connect_options => {
+			RaiseError => 1,
+			AutoCommit => 1,
+			PrintError => 0,
+		}
+	);
+
+}
 
 1;
