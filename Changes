@@ -8,3 +8,7 @@
     - support for mysql and rose db
 0.08   2025-05-18
     - add DBD::mysql and Rose::DB::MySQL
+0.09   2025-05-20
+    - fix Rose::DB::MySQL
+    - update tests
+    - prevent test to run if mysql is not installed
