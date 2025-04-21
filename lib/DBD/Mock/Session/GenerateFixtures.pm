@@ -38,7 +38,7 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
 	fetch              => 'DBI::st::fetch',
 	prepare_cached     => 'DBI::db::prepare_cached',
 	prepare            => 'DBI::db::prepare',
-	mocked_prepare     => 'DBD::Mock::db::prepare'
+	mocked_prepare     => 'DBD::Mock::db::prepare',
 );
 
 sub new {
@@ -169,12 +169,14 @@ sub _override_dbi_execute {
 
 			my $sql    = $sth->{Statement};
 			my $retval = $orig_execute->($sth, @args);
+
 			my $col_names;
 			try {
-				$col_names = $sth->{NAME};
+				$col_names = $sth->{NAME}
+					if $sql !~ m/^INSERT|^UPDATE|^DELETE/i;
 			} catch {
 				my $error = $_;
-				say  $error;
+				say $error;
 			};
 
 			my $rows       = $sth->rows();
@@ -185,7 +187,8 @@ sub _override_dbi_execute {
 			};
 
 			my $result = [];
-			if ($rows > 0) {
+			if ($sql =~ m/^INSERT|^UPDATE|^DELETE/i) {
+				push @$result, ['rows'];
 				foreach my $row (1 .. $rows) {
 					push @{$result}, [];
 				}

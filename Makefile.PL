@@ -12,19 +12,8 @@ version_from 'lib/DBD/Mock/Session/GenerateFixtures.pm';
 print "Checking system dependencies...\n";
 
 # Check if 'mysqld' is installed
-my $mysqld_check = system("which mysqld > /dev/null 2>&1");
-# if ($mysqld_check != 0) {
-#     die <<'END';
-# Error: MySQL server (mysqld) is not installed or not in PATH.
-
-# Please install it manually before proceeding. On Ubuntu, you can run:
-#     sudo apt update
-#     sudo apt install -y libmysqlclient-dev
-#     sudo apt install -y mysql-server
-
-# END
-# }
-
+my $mysqld_check       = system("which mysqld > /dev/null 2>&1");
+my $mysql_config_check = system("which mysql_config > /dev/null 2>&1");
 
 perl_version => '5.14.4';
 
@@ -53,7 +42,7 @@ test_requires 'Try::Tiny'                 => '0.32';
 test_requires 'autodie'                   => '2.37';
 
 
-if ($mysqld_check == 0) {
+if ($mysqld_check == 0 && $mysql_config_check == 0) {
     test_requires 'DBD::mysql'                => '5.012';
     test_requires 'Rose::DB::MySQL'           => '0.774';
     test_requires 'Test::mysqld'              => '1.0030';

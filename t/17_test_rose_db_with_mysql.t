@@ -2,21 +2,27 @@ use strict;
 use warnings;
 
 use Test2::V0;
-use lib qw(lib t);
+use lib        qw(lib t);
 use MyDatabase qw(build_mysql_db populate_test_db);
 
+
 use DBI;
-use Test::mysqld;
 use Data::Dumper;
 use DBD::Mock::Session::GenerateFixtures;
 use Rose::DB::Object::Loader;
 use Sub::Override;
 use File::Path qw(rmtree);
 
-my $mysqld_check = system("which mysqld > /dev/null 2>&1");
+rmtree './t/db_fixtures';
+rmtree './t/DB';
+unlink './t/rose_test_db';
 
-if ($mysqld_check != 0) {
-	plan skip_all => "mysqld is not installed or not in PATH";
+my $mysqld_check       = system("which mysqld > /dev/null 2>&1");
+my $mysql_config_check = system("which mysql_config > /dev/null 2>&1");
+
+if ($mysqld_check != 0 || $mysql_config_check != 0) {
+	plan skip_all =>
+"mysqld is not installed or not in PATH. Please run 'sudo apt-get install -y mysql-server, mysql-client, and libmysqlclient-dev'";
 }
 
 my $override = Sub::Override->new();
@@ -28,8 +34,8 @@ my $db = DB->new(
 );
 
 my $loader = Rose::DB::Object::Loader->new(
-    db           => $db,
-    class_prefix => 'DB'
+	db           => $db,
+	class_prefix => 'DB'
 ) or die "Failed to create loader: $@";
 
 build_mysql_db($db->dbh);
@@ -179,15 +185,22 @@ subtest 'mock data from a real dbh to collect data' => sub {
 	);
 
 	is($num_rows_deleted, 2, 'DB::Media::Manager->delete_media works ok');
+	$db->dbh->disconnect();
 };
 
 subtest 'use a mocked dbh to test rose db support' => sub {
 
 	my $mock_dumper = DBD::Mock::Session::GenerateFixtures->new();
+	my $dbh         = $mock_dumper->get_dbh();
 
-	# my $override = Sub::Override->new();
-	my $dbh      = $mock_dumper->get_dbh();
+	my $override = Sub::Override->new();
+
 	$dbh->{mock_start_insert_id} = 3;
+	my $last_insert_id    = 4;
+	my $update_or_deleted = 1;
+	$override->replace('Rose::DB::dbh'                           => sub {return $dbh});
+	$override->replace('Rose::DB::MySQL::last_insertid_from_sth' => sub {$last_insert_id++; return $last_insert_id});
+	$override->replace('DBD::Mock::st::rows'                     => sub {return 1});
 
 	my $num_rows_updated = DB::Media::Manager->update_media(
 		set => {
@@ -262,6 +275,7 @@ subtest 'use a mocked dbh to test rose db support' => sub {
 
 
 	note 'Mock an count using an Rose::DB::Object::Manager count method and a mocked dbh';
+	$override->replace('DBD::Mock::st::rows' => sub {return 2});
 
 	my $count = DB::Media::Manager->get_media_count(
 		with_objects => ['media_type', 'license'],
@@ -281,8 +295,8 @@ subtest 'use a mocked dbh to test rose db support' => sub {
 		media_type_id => 2,
 		license_id    => 2,
 	);
-
 	$media_obj->save();
+
 	is($media_obj->id, 5, 'last inserted id is ok');
 
 	my $media_obj_2 = DB::Media->new(

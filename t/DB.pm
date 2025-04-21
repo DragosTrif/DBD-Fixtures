@@ -6,7 +6,6 @@ use warnings;
 use Rose::DB;
 use base qw(Rose::DB);
 use Data::Dumper;
-use Test::mysqld;
 
 # Use a private registry for this class
 __PACKAGE__->use_private_registry;
@@ -27,15 +26,17 @@ __PACKAGE__->register_db(
 );
 
 my $mysqld_check = system("which mysqld > /dev/null 2>&1");
+my $mysql_config_check = system("which mysql_config > /dev/null 2>&1");
 
-if ($mysqld_check == 0) {
+if ($mysqld_check == 0 && $mysql_config_check == 0) {
 	require Test::mysqld;
+
 	our $mysqld = Test::mysqld->new(
 		my_cnf => {
 			'skip-networking' => '',
 			'user'            => $ENV{USER} // 'root',
 		}
-	) or die "Failed to start Test::mysqld: $Test::mysqld::errstr";
+	) or die "Failed to start Test::mysqld";
 
 
 	__PACKAGE__->register_db(
