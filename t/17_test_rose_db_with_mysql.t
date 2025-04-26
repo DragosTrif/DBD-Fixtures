@@ -13,9 +13,9 @@ use Rose::DB::Object::Loader;
 use Sub::Override;
 use File::Path qw(rmtree);
 
-rmtree './t/db_fixtures';
-rmtree './t/DB';
-unlink './t/rose_test_db';
+rmtree 't/db_fixtures';
+rmtree 't/DB';
+unlink 't/rose_test_db';
 
 my $mysqld_check       = system("which mysqld > /dev/null 2>&1");
 my $mysql_config_check = system("which mysql_config > /dev/null 2>&1");
@@ -41,7 +41,7 @@ my $loader = Rose::DB::Object::Loader->new(
 build_mysql_db($db->dbh);
 populate_test_db($db->dbh);
 
-$loader->make_modules(module_dir => './t') or die 'Failed to make classes:';
+$loader->make_modules(module_dir => 't') or die 'Failed to make classes:';
 
 my $expected_rows = [{
 		'license_id'        => 1,
@@ -324,7 +324,7 @@ subtest 'use a mocked dbh to test rose db support' => sub {
 };
 
 
-rmtree './t/db_fixtures';
-rmtree './t/DB';
+rmtree 't/db_fixtures';
+rmtree 't/DB';
 
 done_testing();
