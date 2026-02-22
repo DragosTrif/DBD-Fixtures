@@ -13,41 +13,39 @@ use DB;
 use autodie;
 
 sub db_handle {
-	my $db_file = shift
-		or croak "db_handle() requires a database name";
+    my $db_file = shift
+      or croak "db_handle() requires a database name";
 
-	# no warnings 'once';
+    # no warnings 'once';
 
-	my $dbh = DBI->connect(
-		'dbi:SQLite:dbname=:memory:',
-		"",    # no username required,
-		"",    # no pass required,
-		{
-			RaiseError => 1,
-			PrintError => 0,
-			# AutoCommit => 1
-		},
-	) or croak "can not connect to db";
+    my $dbh = DBI->connect(
+        'dbi:SQLite:dbname=:memory:',
+        "",    # no username required,
+        "",    # no pass required,
+        {
+            RaiseError => 1,
+            PrintError => 0,
 
+            # AutoCommit => 1
+        },
+    ) or croak "can not connect to db";
 
-	return $dbh;
+    return $dbh;
 }
 
 sub build_tests_db {
-	my $dbh = shift;
+    my $dbh = shift;
 
-
-	my $sql_media_type = <<"SQL";
+    my $sql_media_type = <<"SQL";
 CREATE TABLE IF NOT EXISTS media_types (
 	id INTEGER PRIMARY KEY,
 	media_type VARCHAR(10) NOT NULL
 );
 SQL
 
-	$dbh->do($sql_media_type);
+    $dbh->do($sql_media_type);
 
-
-	my $sql_media = <<"SQL";
+    my $sql_media = <<"SQL";
 CREATE TABLE IF NOT EXISTS media (
 id INTEGER PRIMARY KEY,
 name VARCHAR(255) NOT NULL,
@@ -62,9 +60,9 @@ REFERENCES licenses(id)
 );
 SQL
 
-	$dbh->do($sql_media);
+    $dbh->do($sql_media);
 
-	my $sql_license = <<"SQL";
+    my $sql_license = <<"SQL";
 CREATE TABLE IF NOT EXISTS licenses (
 	id INTEGER PRIMARY KEY,
 	name VARCHAR(255) NOT NULL,
@@ -72,56 +70,74 @@ CREATE TABLE IF NOT EXISTS licenses (
 );
 SQL
 
-	$dbh->do($sql_license);
-	return;
+    $dbh->do($sql_license);
+
+    my $login_table = <<"SQL";
+CREATE TABLE  IF NOT EXISTS user_login_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    login_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+SQL
+    $dbh->do($login_table);
+
+    return;
 }
 
 sub populate_test_db {
 
-	my $dbh = shift;
+    my $dbh = shift;
 
-	my $sql_media_type = "INSERT INTO media_types (media_type) VALUES (?)";
-	my $sth            = $dbh->prepare($sql_media_type);
-	my %media_type_id_for;
+    my $sql_media_type = "INSERT INTO media_types (media_type) VALUES (?)";
+    my $sth            = $dbh->prepare($sql_media_type);
+    my %media_type_id_for;
 
-	foreach my $type (qw/video audio image/) {
-		$sth->execute($type);
-		$media_type_id_for{$type} = $dbh->last_insert_id("", "", "", "");
-	}
+    foreach my $type (qw/video audio image/) {
+        $sth->execute($type);
+        $media_type_id_for{$type} = $dbh->last_insert_id( "", "", "", "" );
+    }
 
-
-	my $sql_license = <<"SQL";
+    my $sql_license = <<"SQL";
 INSERT INTO licenses (name, allows_commercial)
 VALUES ( ?, ? )
 SQL
 
-	$sth = $dbh->prepare($sql_license);
+    $sth = $dbh->prepare($sql_license);
 
+    my @licenses = (
+        [ 'Public Domain',                      1 ],
+        [ 'Attribution CC BY',                  1 ],
+        [ 'Attribution CC BY-SA',               1 ],
+        [ 'Attribution-NonCommercial CC BY-NC', 0 ],
+    );
 
-	my @licenses =
-		(['Public Domain', 1], ['Attribution CC BY', 1], ['Attribution CC BY-SA', 1], ['Attribution-NonCommercial CC BY-NC', 0],);
+    my %license_id_for;
+    foreach my $license (@licenses) {
+        my ( $name, $allows_commercial ) = @$license;
+        $sth->execute( $name, $allows_commercial );
+        $license_id_for{$name} = $dbh->last_insert_id( "", "", "", "" );
+    }
 
-	my %license_id_for;
-	foreach my $license (@licenses) {
-		my ($name, $allows_commercial) = @$license;
-		$sth->execute($name, $allows_commercial);
-		$license_id_for{$name} = $dbh->last_insert_id("", "", "", "");
-	}
+    my @media = (
+        [
+            'Anne Frank Stamp',
+            '/data/images/anne_fronk_stamp.jpg',
+            'http://commons.wikimedia.org/wiki/File:Anne_Frank_stamp.jpg',
+            'Deutsche Post',
+            $media_type_id_for{'image'},
+            $license_id_for{'Public Domain'},
+        ],
+        [
+            'Clair de Lune',
+            '/data/audio/claire_de_lune.ogg',
+            'http://commons.wikimedia.org/wiki/File:Sonate_Clair_de_lune.ogg',
+            'Schwarzer Stern',
+            $media_type_id_for{'audio'},
+            $license_id_for{'Public Domain'},
+        ],
+    );
 
-	my @media = ([
-			'Anne Frank Stamp',                                            '/data/images/anne_fronk_stamp.jpg',
-			'http://commons.wikimedia.org/wiki/File:Anne_Frank_stamp.jpg', 'Deutsche Post',
-			$media_type_id_for{'image'},                                   $license_id_for{'Public Domain'},
-		],
-		[
-			'Clair de Lune',                                                   '/data/audio/claire_de_lune.ogg',
-			'http://commons.wikimedia.org/wiki/File:Sonate_Clair_de_lune.ogg', 'Schwarzer Stern',
-			$media_type_id_for{'audio'},                                       $license_id_for{'Public Domain'},
-		],
-	);
-
-
-	my $sql_media = <<'SQL';
+    my $sql_media = <<'SQL';
 INSERT INTO media (
 name, location, source, attribution,
 media_type_id, license_id
@@ -129,17 +145,17 @@ media_type_id, license_id
 VALUES ( ?, ?, ?, ?, ?, ? )
 SQL
 
-	$sth = $dbh->prepare($sql_media);
-	foreach my $media (@media) {
-		$sth->execute(@$media);
-	}
+    $sth = $dbh->prepare($sql_media);
+    foreach my $media (@media) {
+        $sth->execute(@$media);
+    }
 
 }
 
 sub build_mysql_db {
-	my $dbh = shift;
+    my $dbh = shift;
 
-	my $sql_media_type = <<"SQL";
+    my $sql_media_type = <<"SQL";
 	CREATE TABLE IF NOT EXISTS media_types (
     id INT NOT NULL AUTO_INCREMENT,
     media_type VARCHAR(10) NOT NULL,
@@ -147,9 +163,9 @@ sub build_mysql_db {
 );
 SQL
 
-	$dbh->do($sql_media_type);
+    $dbh->do($sql_media_type);
 
-	my $sql_license = <<"SQL";
+    my $sql_license = <<"SQL";
 CREATE TABLE IF NOT EXISTS licenses (
     id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
@@ -158,9 +174,9 @@ CREATE TABLE IF NOT EXISTS licenses (
 );
 SQL
 
-	$dbh->do($sql_license);
+    $dbh->do($sql_license);
 
-	my $sql_media = <<"SQL";
+    my $sql_media = <<"SQL";
 CREATE TABLE IF NOT EXISTS media (
     id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
@@ -175,9 +191,9 @@ CREATE TABLE IF NOT EXISTS media (
 );
 SQL
 
-	$dbh->do($sql_media);
+    $dbh->do($sql_media);
 
-	return 1;
+    return 1;
 }
 
 1;
