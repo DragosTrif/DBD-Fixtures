@@ -10,27 +10,29 @@ jobs:
 
     strategy:
       matrix:
-        perl: [ '5.42.0' ]
+        perl: ['5.38', '5.40', '5.42']
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Perl
-      uses: shogo82148/actions-setup-perl@v1
-      with:
-        perl-version: ${{ matrix.perl }}
+      - name: Setup Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+          install-modules-with: cpanm
+          enable-modules-cache: true
 
-    - name: Install dependencies
-      run: |
-        cpanm --notest --installdeps .
+      - name: Install dependencies
+        run: |
+          cpanm --notest ExtUtils::MakeMaker
+          perl Makefile.PL
+          make installdeps
 
-    - name: Build
-      run: |
-        - name: Install dependencies
-  run: |
-        cpanm --notest ExtUtils::MakeMaker
-        perl Makefile.PL
-        make
+      - name: Build
+        run: |
+          perl Makefile.PL
+          make
 
-    - name: Run tests
-      run: make test
+      - name: Run tests
+        run: make test
