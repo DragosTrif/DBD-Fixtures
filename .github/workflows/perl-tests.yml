@@ -26,6 +26,9 @@ jobs:
 
     - name: Build
       run: |
+        - name: Install dependencies
+  run: |
+        cpanm --notest ExtUtils::MakeMaker
         perl Makefile.PL
         make
 
