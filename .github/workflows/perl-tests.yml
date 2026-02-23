@@ -23,16 +23,13 @@ jobs:
           install-modules-with: cpanm
           enable-modules-cache: true
 
-      - name: Install dependencies
+      - name: Install, Build, and Test
         run: |
           cpanm --notest ExtUtils::MakeMaker
           perl Makefile.PL
           make installdeps
-
-      - name: Build
-        run: |
-          perl Makefile.PL
           make
+          make test
 
       - name: Run tests
         run: make test
