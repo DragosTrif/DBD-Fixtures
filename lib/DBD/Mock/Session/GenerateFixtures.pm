@@ -18,7 +18,7 @@ use Readonly;
 use Data::Walk;
 use Try::Tiny;
 
-our $VERSION = 0.11;
+our $VERSION = 1.01;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -881,8 +881,6 @@ DBD::Mock::Session::GenerateFixtures - A module to generate fixtures for DBD::Mo
 	try {
 		$login_history->save();
 		$login_history->db()->dbh()->commit();
-		is( $login_history->db()->dbh()->err(),
-			 undef, 'begin_work and commit are found in session' );
 	}
 	catch {
 	 $login_history->db()->dbh()->rollback();
