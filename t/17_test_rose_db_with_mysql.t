@@ -191,40 +191,49 @@ subtest 'mock data from a real dbh to collect data' => sub {
 
     is( $num_rows_deleted, 2, 'DB::Media::Manager->delete_media works ok' );
 
-    my $login_history = DB::UserLoginHistory->new( user_id => 1 );
-    $login_history->db()->dbh()->begin_work();
+    my $db            = DB::UserLoginHistory->new->db;
+    my $login_history = DB::UserLoginHistory->new(
+        user_id => 1,
+        db      => $db,
+    );
+
+    $db->dbh->begin_work();
+
     try {
         $login_history->save();
-        $login_history->db()->dbh()->commit();
+        $db->dbh->commit();
     }
     catch {
-        $login_history->db()->dbh()->rollback();
+        $db->dbh->rollback();
     };
 
     my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-        query => [
-            'user_id' => 1,
-        ]
+        db    => $db,
+        query => [ user_id => 1 ],
     );
 
     is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
 
-    my $login_history_2 = DB::UserLoginHistory->new( user_id => 2 );
-    $login_history_2->db()->dbh()->begin_work();
+    my $login_history_2 = DB::UserLoginHistory->new(
+        user_id => 2,
+        db      => $db,
+    );
+
+    $db->dbh->begin_work();
     try {
         $login_history_2->save();
-        die 'ups we have an error';
-        $login_history_2->db()->dbh()->commit();
+        die 'prevent commit';
+        $db->dbh->commit();
     }
     catch {
-        $login_history_2->db()->dbh()->rollback();
+        $db->dbh->rollback();
     };
 
     $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-        query => [
-            'user_id' => 2,
-        ]
+        db    => $db,
+        query => [ user_id => 2 ],
     );
+
     is( $logins->[0], undef, 'begin_work and rollback are set in session' );
 
     $db->dbh->disconnect();
@@ -366,42 +375,50 @@ subtest 'use a mocked dbh to test rose db support' => sub {
 
     is( $num_rows_deleted, 2, 'DB::Media::Manager->delete_media works ok' );
 
-    my $login_history = DB::UserLoginHistory->new( user_id => 1 );
-    $login_history->db()->dbh()->begin_work();
+    my $db            = DB::UserLoginHistory->new->db;
+    my $login_history = DB::UserLoginHistory->new(
+        user_id => 1,
+        db      => $db,
+    );
+
+    $db->dbh->begin_work();
+
     try {
         $login_history->save();
-        $login_history->db()->dbh()->commit();
+        $db->dbh->commit();
     }
     catch {
-        $login_history->db()->dbh()->rollback();
+        $db->dbh->rollback();
     };
 
     my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-        query => [
-            'user_id' => 1,
-        ]
+        db    => $db,
+        query => [ user_id => 1 ],
     );
 
     is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
 
-    my $login_history_2 = DB::UserLoginHistory->new( user_id => 2 );
-    $login_history_2->db()->dbh()->begin_work();
+    my $login_history_2 = DB::UserLoginHistory->new(
+        user_id => 2,
+        db      => $db,
+    );
+
+    $db->dbh->begin_work();
     try {
         $login_history_2->save();
-        die 'ups we have an error';
-        $login_history_2->db()->dbh()->commit();
+        die 'prevent commit';
+        $db->dbh->commit();
     }
     catch {
-        $login_history_2->db()->dbh()->rollback();
+        $db->dbh->rollback();
     };
 
     $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-        query => [
-            'user_id' => 2,
-        ]
+        db    => $db,
+        query => [ user_id => 2 ],
     );
-    is( $logins->[0], undef, 'begin_work and rollback are set in session' );
 
+    is( $logins->[0], undef, 'begin_work and rollback are set in session' );
 };
 
 rmtree 't/db_fixtures';
