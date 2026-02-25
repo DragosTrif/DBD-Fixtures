@@ -193,6 +193,15 @@ SQL
 
     $dbh->do($sql_media);
 
+    my $login_table = <<"SQL";
+    CREATE TABLE IF NOT EXISTS user_login_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    login_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+SQL
+
+    $dbh->do($login_table);
     return 1;
 }
 
