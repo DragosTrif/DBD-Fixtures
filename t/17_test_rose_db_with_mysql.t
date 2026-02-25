@@ -190,6 +190,32 @@ subtest 'mock data from a real dbh to collect data' => sub {
     );
 
     is( $num_rows_deleted, 2, 'DB::Media::Manager->delete_media works ok' );
+
+    my $login_history = DB::UserLoginHistory->new( user_id => 1 );
+    $login_history->db()->dbh()->begin_work();
+    try {
+        $login_history->save();
+        $login_history->db()->dbh()->commit();
+        is( $login_history->db()->dbh()->err(),
+            undef, 'begin_work and commit are found in session' );
+    }
+    catch {
+        $login_history->db()->dbh()->rollback();
+    };
+
+    my $login_history_2 = DB::UserLoginHistory->new( user_id => 2 );
+    $login_history_2->db()->dbh()->begin_work();
+    try {
+        $login_history_2->save();
+        die 'ups we have an error';
+        $login_history_2->db()->dbh()->commit();
+    }
+    catch {
+        is( $login_history->db()->dbh()->err(),
+            undef, 'begin_work and rollback are found in session' );
+        $login_history_2->db()->dbh()->rollback();
+    };
+
     $db->dbh->disconnect();
 };
 
