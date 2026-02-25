@@ -187,12 +187,18 @@ subtest 'mock data from a real dbh to collect data' => sub {
         $login_history->save();
         $login_history->db()->dbh()->commit();
         ok( 1, 'begin_work and commit are set in session' );
-        is( $login_history->db()->dbh()->err(),
-            undef, 'begin_work and commit are set in session' );
     }
     catch {
         $login_history->db()->dbh()->rollback();
     };
+
+    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+        query => [
+            'user_id' => 1,
+        ]
+    );
+
+    is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
 
     my $login_history_2 = DB::UserLoginHistory->new( user_id => 2 );
     $login_history_2->db()->dbh()->begin_work();
@@ -202,11 +208,15 @@ subtest 'mock data from a real dbh to collect data' => sub {
         $login_history_2->db()->dbh()->commit();
     }
     catch {
-        is( $login_history->db()->dbh()->err(),
-            undef, 'begin_work and rollback are set in session' );
         $login_history_2->db()->dbh()->rollback();
     };
 
+    $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+        query => [
+            'user_id' => 2,
+        ]
+    );
+    is( $logins->[0], undef, 'begin_work and rollback are set in session' );
 };
 
 subtest 'use a mocked dbh to test rose db support' => sub {
@@ -348,12 +358,18 @@ subtest 'use a mocked dbh to test rose db support' => sub {
     try {
         $login_history->save();
         $login_history->db()->dbh()->commit();
-        is( $login_history->db()->dbh()->err(),
-            undef, 'begin_work and commit are found in session' );
     }
     catch {
         $login_history->db()->dbh()->rollback();
     };
+
+    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+        query => [
+            'user_id' => 1,
+        ]
+    );
+
+    is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
 
     my $login_history_2 = DB::UserLoginHistory->new( user_id => 2 );
     $login_history_2->db()->dbh()->begin_work();
@@ -363,10 +379,15 @@ subtest 'use a mocked dbh to test rose db support' => sub {
         $login_history_2->db()->dbh()->commit();
     }
     catch {
-        is( $login_history->db()->dbh()->err(),
-            undef, 'begin_work and rollback are found in session' );
         $login_history_2->db()->dbh()->rollback();
     };
+
+    $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+        query => [
+            'user_id' => 2,
+        ]
+    );
+    is( $logins->[0], undef, 'begin_work and rollback are set in session' );
 
     $override->restore('Rose::DB::dbh');
     $override->restore('DBD::Mock::db::last_insert_rowid');
