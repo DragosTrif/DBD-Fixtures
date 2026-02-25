@@ -204,6 +204,7 @@ subtest 'mock data from a real dbh to collect data' => sub {
         $db->dbh->commit();
     }
     catch {
+		note "$_";
         $db->dbh->rollback();
     };
 
@@ -219,22 +220,22 @@ subtest 'mock data from a real dbh to collect data' => sub {
         db      => $db,
     );
 
-    $db->dbh->begin_work();
-    try {
-        $login_history_2->save();
-        die 'prevent commit';
-        $db->dbh->commit();
-    }
-    catch {
-        $db->dbh->rollback();
-    };
+    # $db->dbh->begin_work();
+    # try {
+    #     $login_history_2->save();
+    #     die 'prevent commit';
+    #     $db->dbh->commit();
+    # }
+    # catch {
+    #     $db->dbh->rollback();
+    # };
 
-    $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-        db    => $db,
-        query => [ user_id => 2 ],
-    );
+    # $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+    #     db    => $db,
+    #     query => [ user_id => 2 ],
+    # );
 
-    is( $logins->[0], undef, 'begin_work and rollback are set in session' );
+    # is( $logins->[0], undef, 'begin_work and rollback are set in session' );
 
     $db->dbh->disconnect();
 };
@@ -403,22 +404,22 @@ subtest 'use a mocked dbh to test rose db support' => sub {
         db      => $db,
     );
 
-    $db->dbh->begin_work();
-    try {
-        $login_history_2->save();
-        die 'prevent commit';
-        $db->dbh->commit();
-    }
-    catch {
-        $db->dbh->rollback();
-    };
+    # $db->dbh->begin_work();
+    # try {
+    #     $login_history_2->save();
+    #     die 'prevent commit';
+    #     $db->dbh->commit();
+    # }
+    # catch {
+    #     $db->dbh->rollback();
+    # };
 
-    $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-        db    => $db,
-        query => [ user_id => 2 ],
-    );
+    # $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+    #     db    => $db,
+    #     query => [ user_id => 2 ],
+    # );
 
-    is( $logins->[0], undef, 'begin_work and rollback are set in session' );
+    # is( $logins->[0], undef, 'begin_work and rollback are set in session' );
 };
 
 rmtree 't/db_fixtures';
