@@ -182,6 +182,15 @@ subtest 'mock data from a real dbh to collect data' => sub {
 
     is( $media_obj_2->id, 4, 'last inserted id incremented with one' );
 
+    my $num_rows_deleted = DB::Media::Manager->delete_media(
+        where => [
+            name => 'test',
+
+        ]
+    );
+
+    is( $num_rows_deleted, 2, 'DB::Media::Manager->delete_media works ok' );
+
     my $db = DB::UserLoginHistory->new->db;
     $db->dbh()->begin_work() or die $db->error;
     my $rose_dbh = $db->dbh();
