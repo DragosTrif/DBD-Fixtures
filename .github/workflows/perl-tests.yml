@@ -23,6 +23,11 @@ jobs:
           install-modules-with: cpanm
           enable-modules-cache: true
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-server mysql-client libmysqlclient-dev
+
       - name: Install, Build, and Test
         run: |
           cpanm --notest ExtUtils::MakeMaker
