@@ -44,4 +44,20 @@ SQL
 
 };
 
+subtest 'upsert generate mock data' => sub {
+
+    my $dbh = DBD::Mock::Session::GenerateFixtures->new()->get_dbh();
+
+    my $sql_license = <<"SQL";
+INSERT INTO user_login_history (user_id) VALUES (?)
+SQL
+
+    chomp $sql_license;
+    $dbh->begin_work();
+    my $r = $dbh->do( $sql_license, undef, 1 );
+    is( $r, 1, 'one row inserted is ok' );
+    $dbh->commit();
+
+};
+
 done_testing();
