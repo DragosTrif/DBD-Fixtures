@@ -33,12 +33,12 @@ subtest 'upsert generate mock data' => sub {
     my $obj = DBD::Mock::Session::GenerateFixtures->new( { dbh => $dbh } );
 
     my $sql_license = <<"SQL";
-INSERT INTO LICENSES (NAME, ALLOWS_COMMERCIAL) VALUES ( ?, ? )
+INSERT INTO user_login_history (user_id) VALUES (?)
 SQL
 
     chomp $sql_license;
     $dbh->begin_work();
-    my $r = $dbh->do( $sql_license, undef, 'test_license', 'no' );
+    my $r = $dbh->do( $sql_license, undef, 1 );
     is( $r, 1, 'one row inserted is ok' );
     $dbh->commit();
 
