@@ -198,7 +198,7 @@ SQL
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     login_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB;
 SQL
 
     $dbh->do($login_table);
