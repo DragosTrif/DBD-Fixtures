@@ -37,10 +37,10 @@ INSERT INTO user_login_history (user_id) VALUES (?)
 SQL
 
     chomp $sql_license;
-    $dbh->begin_work();
+    $obj->get_dbh()->begin_work();
     my $r = $dbh->do( $sql_license, undef, 1 );
     is( $r, 1, 'one row inserted is ok' );
-    $dbh->commit();
+    $obj->get_dbh()->commit();
 
 };
 
