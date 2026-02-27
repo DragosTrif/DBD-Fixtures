@@ -219,7 +219,8 @@ sub _override_dbi_execute {
               if ref $self->{bind_params}
               && scalar @{ $self->{bind_params} } > 0;
 
-            push @{ $self->{result} }, $query_data;
+            push @{ $self->{result} }, $query_data
+              if $sql !~ m/BEGIN|COMMIT/;
             $self->_write_to_file();
             $self->{bind_params} = [];
             $self->{sth}         = $sth;
