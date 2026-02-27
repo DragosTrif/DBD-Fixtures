@@ -31,7 +31,7 @@ SQL
     try {
         my $sth_2 =
           $dbh->prepare('INSERT INTO user_login_history (id) VALUES (?)');
-        my $r_3 = $sth_2->execute('aa') or die $dbh->err();
+        my $r_3 = $sth_2->execute('aa');
     }
     catch {
         $dbh->rollback();

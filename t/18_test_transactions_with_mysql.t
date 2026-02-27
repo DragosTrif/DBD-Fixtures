@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 use Test2::V0;
 use Try::Tiny;
 
@@ -25,7 +28,13 @@ my $mysqld = Test::mysqld->new(
     }
 ) or die "Failed to start Test::mysqld";
 
-my $dbh = DBI->connect( $mysqld->dsn( dbname => 'test' ), );
+my $dbh = DBI->connect( $mysqld->dsn( dbname => 'test' ),
+     {
+        RaiseError => 1,   # ← THIS is where it goes
+        PrintError => 0,
+        AutoCommit => 1,
+    }
+);
 
 build_mysql_db($dbh);
 populate_test_db($dbh);
