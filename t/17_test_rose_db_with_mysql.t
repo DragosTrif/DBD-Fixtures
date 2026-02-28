@@ -18,21 +18,19 @@ rmtree 't/db_fixtures';
 rmtree 't/DB';
 unlink 't/rose_test_db';
 
-my $mysqld_check       = system("which mysqld > /dev/null 2>&1");
-my $mysql_config_check = system("which mysql_config > /dev/null 2>&1");
+my $mysqld_check = system('which mysqld > /dev/null 2>&1');
 
-if ( $mysqld_check != 0 || $mysql_config_check != 0 ) {
+if ( $mysqld_check != 0 ) {
     plan skip_all =>
-"mysqld is not installed or not in PATH. Please run 'sudo apt-get install -y mysql-server, mysql-client, and libmysqlclient-dev'";
+"MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
 }
 
 my $override = Sub::Override->new();
 
 my $db = DB->new(
     domain => 'mysql_test',
-    type   => 'mysql_test'
+    type   => 'mysql_test',
 );
-
 my $loader = Rose::DB::Object::Loader->new(
     db           => $db,
     class_prefix => 'DB'
@@ -191,19 +189,22 @@ subtest 'mock data from a real dbh to collect data' => sub {
 
     is( $num_rows_deleted, 2, 'DB::Media::Manager->delete_media works ok' );
 
-    # my $db = DB::UserLoginHistory->new->db;
-    # $db->dbh()->begin_work() or die $db->error;
-    # my $rose_dbh = $db->dbh();
-    # my $sql      = "INSERT INTO user_login_history (user_id) VALUES (?)";
-    # $rose_dbh->do( $sql, undef, 1 ) or die $db->error;
-    # $db->dbh->commit()              or die $db->error;
+    note 'trans';
+    my $login_history = DB::UserLoginHistory->new( user_id => 1 );
+    $login_history->db->do_transaction(
+        sub {
+            $login_history->save;
+            $login_history->db()->dbh()->commit;
+        }
+    );
+    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+        query => [ user_id => 1 ], );
 
-    # my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-    #     query => [ user_id => 1 ], );
+    is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
 
-    # is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
+    $mock_dumper->get_dbh()->disconnect();
 
-    $db->dbh->disconnect();
+    # $mysqld->stop();
 };
 
 subtest 'use a mocked dbh to test rose db support' => sub {
@@ -342,17 +343,17 @@ subtest 'use a mocked dbh to test rose db support' => sub {
 
     is( $num_rows_deleted, 2, 'DB::Media::Manager->delete_media works ok' );
 
-    # my $db = DB::UserLoginHistory->new->db;
-    # $db->dbh()->begin_work() or die $db->error;
-    # my $rose_dbh = $db->dbh();
-    # my $sql      = "INSERT INTO user_login_history (user_id) VALUES (?)";
-    # $rose_dbh->do( $sql, undef, 1 ) or die $db->error;
-    # $db->dbh->commit()              or die $db->error;
+    my $login_history = DB::UserLoginHistory->new( user_id => 1 );
+    $login_history->db->do_transaction(
+        sub {
+            $login_history->save;
+            $login_history->db()->dbh()->commit;
+        }
+    );
+    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+        query => [ user_id => 1 ], );
 
-    # my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-    #     query => [ user_id => 1 ], );
-
-    # is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
+    is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
 
 };
 

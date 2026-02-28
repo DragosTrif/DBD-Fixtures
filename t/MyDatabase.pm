@@ -7,7 +7,6 @@ use warnings;
 use DBI;
 use Carp 'croak';
 use Exporter::NoWork;
-use Rose::DB::Object::Loader;
 
 use DB;
 use autodie;

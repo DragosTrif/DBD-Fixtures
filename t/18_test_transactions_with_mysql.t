@@ -14,12 +14,11 @@ use Sub::Override;
 use File::Path qw(rmtree);
 use Test::mysqld;
 
-my $mysqld_check       = system("which mysqld > /dev/null 2>&1");
-my $mysql_config_check = system("which mysql_config > /dev/null 2>&1");
+my $mysqld_check       = system('which mysqld > /dev/null 2>&1');
 
-if ( $mysqld_check != 0 || $mysql_config_check != 0 ) {
+if ( $mysqld_check != 0) {
     plan skip_all =>
-"mysqld is not installed or not in PATH. Please run 'sudo apt-get install -y mysql-server, mysql-client, and libmysqlclient-dev'";
+      "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
 }
 
 my $mysqld = Test::mysqld->new(
