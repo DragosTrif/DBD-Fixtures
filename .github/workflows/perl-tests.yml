@@ -32,6 +32,7 @@ jobs:
             libmariadb-dev
       - name: Install and Build
         run: |
+          export MYSQL_CONFIG=/usr/bin/mariadb_config
           cpanm --notest ExtUtils::MakeMaker
           cpanm --notest DBD::Mock DBD::SQLite DBI Data::Walk Exporter::NoWork \
             File::Slurper Readonly Rose::DB Rose::DB::Object \
