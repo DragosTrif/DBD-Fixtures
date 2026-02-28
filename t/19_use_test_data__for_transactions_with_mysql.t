@@ -44,5 +44,5 @@ SQL
     is( $r_3, undef, 'rollback is ok' );
 };
 
-# rmtree 't/db_fixtures';
+rmtree 't/db_fixtures';
 done_testing();
