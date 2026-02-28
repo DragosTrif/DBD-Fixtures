@@ -17,6 +17,7 @@ use File::Spec;
 use Readonly;
 use Data::Walk;
 use Try::Tiny;
+use Data::Dumper;
 
 our $VERSION = 1.02;
 
@@ -114,6 +115,8 @@ sub _set_mock_dbh {
 
     my $dbh_session = DBD::Mock::Session->new( $PROGRAM_NAME => @{$data} );
     $self->_override_dbi_mocked_prepare( $MOCKED_DBI_METHODS{mocked_prepare} );
+
+    # say Dumper $dbh_session;
     $dbh->{mock_session} = $dbh_session;
     $self->{dbh}         = $dbh;
 
@@ -724,13 +727,20 @@ sub _get_current_record_column_names {
 sub _process_mock_data {
     my ( $self, $data ) = @_;
 
-    foreach my $row ( @{$data} ) {
+    while ( my ( $index, $row ) = each( @{$data} ) ) {
+        if ( $row->{statement} eq "ROLLBACK" ) {
+            $data->[ $index - 1 ]->{err}     = 1062;
+            $data->[ $index - 1 ]->{results} = undef;
+            $data->[ $index - 1 ]->{errstr}  = 'Rollback kicked in';
+        }
+
         if ( $row->{col_names} ) {
             my $cols = delete $row->{col_names};
             unshift @{ $row->{results} }, $cols;
         }
     }
 
+    # say Dumper $data;
     return $self;
 }
 

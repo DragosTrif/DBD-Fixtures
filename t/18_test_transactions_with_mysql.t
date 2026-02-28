@@ -14,11 +14,11 @@ use Sub::Override;
 use File::Path qw(rmtree);
 use Test::mysqld;
 
-my $mysqld_check       = system('which mysqld > /dev/null 2>&1');
+my $mysqld_check = system('which mysqld > /dev/null 2>&1');
 
-if ( $mysqld_check != 0) {
+if ( $mysqld_check != 0 ) {
     plan skip_all =>
-      "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+"MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
 }
 
 my $mysqld = Test::mysqld->new(
@@ -27,9 +27,10 @@ my $mysqld = Test::mysqld->new(
     }
 ) or die "Failed to start Test::mysqld";
 
-my $dbh = DBI->connect( $mysqld->dsn( dbname => 'test' ),
-     {
-        RaiseError => 1,   # ← THIS is where it goes
+my $dbh = DBI->connect(
+    $mysqld->dsn( dbname => 'test' ),
+    {
+        RaiseError => 1,            # ← THIS is where it goes
         PrintError => 0,
         AutoCommit => 1,
     }
@@ -55,16 +56,18 @@ SQL
     is( $r, 1, 'one second inserted is ok' );
 
     $obj->get_dbh()->begin_work();
-     my $r_3;
+    my $r_3;
     try {
-    my $sth_2 = $obj->get_dbh()->prepare('INSERT INTO user_login_history (id) VALUES (?)');
-    $r_3   = $sth_2->execute('aa') or die $obj->get_dbh()->err();
-    } catch {
+        my $sth_2 = $obj->get_dbh()
+          ->prepare('INSERT INTO user_login_history (id) VALUES (?)');
+        $r_3 = $sth_2->execute('aa') or die $obj->get_dbh()->err();
+    }
+    catch {
+        note 'in catch';
         $obj->get_dbh()->rollback();
     };
 
-    is($r_3, undef, 'rollback is ok');
+    is( $r_3, undef, 'rollback is ok' );
 };
-
 
 done_testing();

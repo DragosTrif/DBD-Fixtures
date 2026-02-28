@@ -5,7 +5,10 @@ use Test2::V0;
 use Try::Tiny;
 use File::Path qw(rmtree);
 
+use lib qw(lib t);
+
 use DBD::Mock::Session::GenerateFixtures;
+use Data::Dumper;
 
 subtest 'upsert generate mock data' => sub {
 
@@ -31,7 +34,8 @@ SQL
     try {
         my $sth_2 =
           $dbh->prepare('INSERT INTO user_login_history (id) VALUES (?)');
-        my $r_3 = $sth_2->execute('aa');
+
+        my $r_3 = $sth_2->execute('aa') or die $dbh->err();
     }
     catch {
         $dbh->rollback();
@@ -40,5 +44,5 @@ SQL
     is( $r_3, undef, 'rollback is ok' );
 };
 
-rmtree 't/db_fixtures';
+# rmtree 't/db_fixtures';
 done_testing();
