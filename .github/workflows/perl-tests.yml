@@ -26,8 +26,11 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev
-
+          sudo apt-get install -y \
+            mariadb-server \
+            default-mysql-client \
+            libmariadb-dev \
+            libmariadb-dev-compat
       - name: Install and Build
         run: |
           cpanm --notest ExtUtils::MakeMaker
