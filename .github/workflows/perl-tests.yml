@@ -40,7 +40,8 @@ jobs:
             File::Slurper Readonly Rose::DB Rose::DB::Object \
             Rose::DB::Object::Loader Rose::DB::Object::Manager \
             Sub::Override Try::Tiny 
-          cpanm Test::mysqld DBD::mysql Rose::DB::MySQL
+          cpanm Test::mysqld Rose::DB::MySQL
+          cpanm --mysql_config=/usr/bin/mariadb_config DBD::mysql
           perl Makefile.PL
           make
 
