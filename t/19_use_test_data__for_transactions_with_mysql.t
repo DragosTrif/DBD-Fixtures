@@ -30,7 +30,7 @@ SQL
     is( $r, 1, 'second row inserted is ok' );
 
     $dbh->begin_work();
-    my $r_3;
+    my $err;
     try {
         my $sth_2 =
           $dbh->prepare('INSERT INTO user_login_history (id) VALUES (?)');
@@ -38,10 +38,11 @@ SQL
         my $r_3 = $sth_2->execute('aa') or die $dbh->err();
     }
     catch {
+        $err =  $dbh->err();
         $dbh->rollback();
     };
 
-    is( $r_3, undef, 'rollback is ok' );
+    ok( $err, 'rollback trapped an error' );
 };
 
 rmtree 't/db_fixtures';
