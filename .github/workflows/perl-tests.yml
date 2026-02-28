@@ -29,8 +29,8 @@ jobs:
           sudo apt-get install -y \
             mariadb-server \
             mariadb-client \
-            libmariadb-dev \
-            default-libmysqlclient-dev
+            libmariadb-dev
+          sudo ln -s /usr/bin/mariadb_config /usr/bin/mysql_config
       - name: Install and Build
         run: |
           export MYSQL_CONFIG=/usr/bin/mariadb_config
