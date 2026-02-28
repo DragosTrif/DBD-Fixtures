@@ -29,17 +29,19 @@ jobs:
           sudo apt-get install -y \
             mariadb-server \
             mariadb-client \
-            libmariadb-dev
-          sudo ln -s /usr/bin/mariadb_config /usr/bin/mysql_config
+            libmariadb-dev \
+            libmariadb-dev-compat
+
       - name: Install and Build
         run: |
           export MYSQL_CONFIG=/usr/bin/mariadb_config
+          export MARIADB_CONFIG=/usr/bin/mariadb_config
           cpanm --notest ExtUtils::MakeMaker
           cpanm --notest DBD::Mock DBD::SQLite DBI Data::Walk Exporter::NoWork \
             File::Slurper Readonly Rose::DB Rose::DB::Object \
             Rose::DB::Object::Loader Rose::DB::Object::Manager \
             Sub::Override Try::Tiny 
-          cpanm --notest --force DBD::mysql Rose::DB::MySQL 
+          cpanm DBD::mysql Rose::DB::MySQL
           perl Makefile.PL
           make
 
