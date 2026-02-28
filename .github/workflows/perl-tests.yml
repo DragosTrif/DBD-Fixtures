@@ -28,9 +28,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             mariadb-server \
-            default-mysql-client \
-            libmariadb-dev \
-            libmariadb-dev-compat
+            mariadb-client \
+            libmariadb-dev
       - name: Install and Build
         run: |
           cpanm --notest ExtUtils::MakeMaker
