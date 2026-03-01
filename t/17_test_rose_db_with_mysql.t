@@ -195,7 +195,7 @@ subtest 'mock data from a real dbh to collect data' => sub {
     my $login_history = DB::UserLoginHistory->new( user_id => 1 );
  
     my $ok = 1;
-    $login_history->db()->dbh()->begin_work or die $login_history->db()->dbh()->err();
+    $login_history->db()->dbh()->begin_work();
     try {
         $login_history->save() or die $login_history->db()->dbh()->err();
     } catch {
@@ -204,6 +204,7 @@ subtest 'mock data from a real dbh to collect data' => sub {
     };
 
    $login_history->db()->dbh()->commit() if $ok;
+   note "$ok -- 1";
    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
        query => [ user_id => 1 ], );
     is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
@@ -348,7 +349,7 @@ subtest 'use a mocked dbh to test rose db support' => sub {
 
      my $ok = 1;
      my $login_history = DB::UserLoginHistory->new( user_id => 1 );
-    $login_history->db()->dbh()->begin_work or die $login_history->db()->dbh()->err();
+    $login_history->db()->dbh()->begin_work();
     try {
         $login_history->save() or die $login_history->db()->dbh()->err();
     } catch {
@@ -357,7 +358,7 @@ subtest 'use a mocked dbh to test rose db support' => sub {
     };
 
     $login_history->db()->dbh()->commit() if $ok;
-
+    note "$ok --2";
    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
        query => [ user_id => 1 ], );
     is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
