@@ -18,6 +18,12 @@ my $failed_sql_user_login_history = <<"SQL";
 INSERT INTO user_login_history (id) VALUES (?)
 SQL
 
+
+my $mysqld_check = system('which mysqld > /dev/null 2>&1');
+if ( $mysqld_check != 0 ) {
+    plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+}
+
 my $obj = DBD::Mock::Session::GenerateFixtures->new( { file => 't/db_fixtures/18_test_transactions_with_mysql.t.json' } );
 
 subtest 'upsert use mock data' => sub {
