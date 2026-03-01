@@ -191,12 +191,11 @@ CREATE TABLE IF NOT EXISTS media (
 SQL
 
     $dbh->do($sql_media);
-
     my $login_table = <<"SQL";
     CREATE TABLE IF NOT EXISTS user_login_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    login_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
 ) ENGINE=InnoDB;
 SQL
 

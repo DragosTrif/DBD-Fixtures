@@ -198,12 +198,8 @@ subtest 'mock data from a real dbh to collect data' => sub {
     $login_history->db()->dbh()->begin_work();
     try {
         $login_history->save() or die $login_history->db()->dbh()->err();
-          note "????" ;
 
     } catch {
-        note "ERR: " . $login_history->db()->dbh()->err;
-        note "ERRSTR: " . $login_history->db()->dbh()->errstr;
-
         $ok = 0;
         $login_history->db()->dbh()->rollback();
     };
@@ -213,7 +209,6 @@ subtest 'mock data from a real dbh to collect data' => sub {
    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
        query => [ user_id => 1 ], );
     is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
-    # $mysqld->stop();
 };
 
 subtest 'use a mocked dbh to test rose db support' => sub {
