@@ -18,8 +18,7 @@ my $failed_sql_user_login_history = <<"SQL";
 INSERT INTO user_login_history (id) VALUES (?)
 SQL
 
-my $obj = DBD::Mock::Session::GenerateFixtures->new(
-    { file => 't/db_fixtures/18_test_transactions_with_mysql.t.json' } );
+my $obj = DBD::Mock::Session::GenerateFixtures->new( { file => 't/db_fixtures/18_test_transactions_with_mysql.t.json' } );
 
 subtest 'upsert use mock data' => sub {
     my $dbh = $obj->get_dbh();
@@ -69,9 +68,7 @@ subtest 'upsert generate mock data for nested transactions both are ok' => sub {
 
 };
 
-subtest
-  'upsert generate mock data for nested transactions - big trans is not ok' =>
-  sub {
+subtest 'upsert generate mock data for nested transactions - big trans is not ok' => sub {
     my $error_big   = undef;
     my $error_small = undef;
 
@@ -100,11 +97,9 @@ subtest
     $dbh->commit() if $ok;
 
     ok( $error_big, 'error is the big try/catch is ok' );
-  };
+};
 
-subtest
-  'upsert generate mock data for nested transactions - small trans is not ok'
-  => sub {
+subtest 'upsert generate mock data for nested transactions - small trans is not ok' => sub {
     my $error_big   = undef;
     my $error_small = undef;
 
@@ -131,6 +126,6 @@ subtest
 
     $dbh->commit() if $ok;
     ok( $error_small, 'error is the small try/catch is ok' );
-  };
+};
 rmtree 't/db_fixtures';
 done_testing();

@@ -17,8 +17,7 @@ use Test::mysqld;
 my $mysqld_check = system('which mysqld > /dev/null 2>&1');
 
 if ( $mysqld_check != 0 ) {
-    plan skip_all =>
-"MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+    plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
 }
 
 my $mysqld = Test::mysqld->new(
@@ -61,8 +60,7 @@ subtest 'upsert generate mock data' => sub {
     $obj->get_dbh()->begin_work();
     my $r_3;
     try {
-        my $sth_2 = $obj->get_dbh()
-          ->prepare('INSERT INTO user_login_history (id) VALUES (?)');
+        my $sth_2 = $obj->get_dbh()->prepare('INSERT INTO user_login_history (id) VALUES (?)');
         $r_3 = $sth_2->execute('aa') or die $obj->get_dbh()->err();
     }
     catch {
@@ -96,9 +94,7 @@ subtest 'upsert generate mock data for nested transactions both are ok' => sub {
 
 };
 
-subtest
-  'upsert generate mock data for nested transactions - big trans is not ok' =>
-  sub {
+subtest 'upsert generate mock data for nested transactions - big trans is not ok' => sub {
     my $error_big   = undef;
     my $error_small = undef;
 
@@ -127,11 +123,9 @@ subtest
     $dbh->commit() if $ok;
 
     ok( $error_big, 'error in the big try/catch is ok' );
-  };
+};
 
-subtest
-  'upsert generate mock data for nested transactions - small trans is not ok'
-  => sub {
+subtest 'upsert generate mock data for nested transactions - small trans is not ok' => sub {
     my $error_big   = undef;
     my $error_small = undef;
 
@@ -158,6 +152,6 @@ subtest
 
     $dbh->commit() if $ok;
     ok( $error_small, 'error in the small try/catch is ok' );
-  };
+};
 
 done_testing();
