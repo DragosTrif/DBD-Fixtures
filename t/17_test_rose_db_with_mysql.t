@@ -14,6 +14,7 @@ use Rose::DB::Object::Loader;
 use Sub::Override;
 use File::Path qw(rmtree);
 use File::Which qw(which);
+use Try::Tiny;
 
 rmtree 't/db_fixtures';
 rmtree 't/DB';
@@ -192,19 +193,20 @@ subtest 'mock data from a real dbh to collect data' => sub {
 
     note 'trans';
     my $login_history = DB::UserLoginHistory->new( user_id => 1 );
-    $login_history->db->do_transaction(
-        sub {
-            $login_history->save;
-            $login_history->db()->dbh()->commit;
-        }
-    );
-    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-        query => [ user_id => 1 ], );
+ 
+    my $ok = 1;
+    $login_history->db()->dbh()->begin_work or die $login_history->db()->dbh()->err();
+    try {
+        $login_history->save() or die $login_history->db()->dbh()->err();
+    } catch {
+        $ok = 0;
+        $login_history->db()->dbh()->rollback();
+    };
 
+   $login_history->db()->dbh()->commit() if $ok;
+   my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+       query => [ user_id => 1 ], );
     is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
-
-    $mock_dumper->get_dbh()->disconnect();
-
     # $mysqld->stop();
 };
 
@@ -344,16 +346,20 @@ subtest 'use a mocked dbh to test rose db support' => sub {
 
     is( $num_rows_deleted, 2, 'DB::Media::Manager->delete_media works ok' );
 
-    my $login_history = DB::UserLoginHistory->new( user_id => 1 );
-    $login_history->db->do_transaction(
-        sub {
-            $login_history->save;
-            $login_history->db()->dbh()->commit;
-        }
-    );
-    my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
-        query => [ user_id => 1 ], );
+     my $ok = 1;
+     my $login_history = DB::UserLoginHistory->new( user_id => 1 );
+    $login_history->db()->dbh()->begin_work or die $login_history->db()->dbh()->err();
+    try {
+        $login_history->save() or die $login_history->db()->dbh()->err();
+    } catch {
+        $ok = 0;
+        $login_history->db()->dbh()->rollback();
+    };
 
+    $login_history->db()->dbh()->commit() if $ok;
+
+   my $logins = DB::UserLoginHistory::Manager->get_user_login_history(
+       query => [ user_id => 1 ], );
     is( $logins->[0]->id(), 1, 'begin_work and commit are set in session' );
 
 };
