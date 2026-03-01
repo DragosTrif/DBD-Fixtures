@@ -132,6 +132,5 @@ subtest
     $dbh->commit() if $ok;
     ok( $error_small, 'error is the small try/catch is ok' );
   };
-
-# rmtree 't/db_fixtures';
+rmtree 't/db_fixtures';
 done_testing();
