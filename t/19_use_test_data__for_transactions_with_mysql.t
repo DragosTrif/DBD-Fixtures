@@ -9,6 +9,7 @@ use lib qw(lib t);
 
 use DBD::Mock::Session::GenerateFixtures;
 use Data::Dumper;
+use File::Which qw(which);
 
 my $sql_user_login_history = <<"SQL";
 INSERT INTO user_login_history (user_id) VALUES (?)
@@ -19,8 +20,8 @@ INSERT INTO user_login_history (id) VALUES (?)
 SQL
 
 
-my $mysqld_check = system('which mysqld > /dev/null 2>&1');
-if ( $mysqld_check != 0 ) {
+my $mysqld_check = which('mysqld') || which('mariadb');
+if ( $mysqld_check ) {
     plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
 }
 

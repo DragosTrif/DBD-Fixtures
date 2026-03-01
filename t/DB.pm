@@ -7,7 +7,7 @@ use Rose::DB;
 use base qw(Rose::DB);
 use Data::Dumper;
 use Test::mysqld;
-
+use File::Which qw(which);
 # Use a private registry for this class
 __PACKAGE__->use_private_registry;
 
@@ -24,12 +24,12 @@ __PACKAGE__->register_db(
     }
 );
 
-my $mysqld_check = system('which mysqld > /dev/null 2>&1');
+my $mysqld_check = which('mysqld') || which('mariadb');
 
-if ( $mysqld_check == 0 ) {
+if ( $mysqld_check ) {
 
     our $mysqld = Test::mysqld->new(
-        mysqld => '/usr/sbin/mysqld',    # MariaDB binary
+        mysqld => $mysqld_check,    # MariaDB binary
         my_cnf => {
             'skip-networking' => '',
         }

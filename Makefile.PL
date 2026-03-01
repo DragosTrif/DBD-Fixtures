@@ -66,6 +66,7 @@ WriteMakefile(
         'Readonly'         => '2.05',
         'Data::Walk'       => '2.01',
         'Try::Tiny'        => '0.32',
+        'File::Which'      => '1.27'
     },
     TEST_REQUIRES    => $TEST_REQUIRES,
     MIN_PERL_VERSION => '5.14.4',
