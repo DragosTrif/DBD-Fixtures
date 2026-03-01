@@ -34,14 +34,9 @@ jobs:
       - name: Install and Build
         run: |
           cpanm --notest ExtUtils::MakeMaker
-          cpanm --notest DBD::Mock DBD::SQLite DBI Data::Walk Exporter::NoWork \
-            File::Slurper Readonly Rose::DB Rose::DB::Object \
-            Rose::DB::Object::Loader Rose::DB::Object::Manager \
-            Sub::Override Try::Tiny 
-          cpanm --notest --force Test::mysqld Rose::DB::MySQL
-          cpanm --mysql_config=/usr/bin/mariadb_config DBD::mysql
           perl Makefile.PL
           make
+          make install
 
       - name: Run tests
         run: make test
