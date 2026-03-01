@@ -39,9 +39,10 @@ jobs:
             Rose::DB::Object::Loader Rose::DB::Object::Manager \
             Sub::Override Try::Tiny File::Which
           cpanm --notest --force Test::mysqld Rose::DB::MySQL
-          cpanm --mysql_config=/usr/bin/mariadb_config DBD::mysql
+          cpanm DBD::mysql
           perl Makefile.PL
           make
+          make install
 
       - name: Run tests
-        run: make test
+        run: prove -v ./t
