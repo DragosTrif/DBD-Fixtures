@@ -17,7 +17,7 @@ use File::Which qw(which);
 
 my $mysqld_check =  which('mysqld') || which('mariadb');
 
-if ( $mysqld_check ) {
+if ( !$mysqld_check ) {
     plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
 }
 
