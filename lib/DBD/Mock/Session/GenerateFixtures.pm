@@ -18,7 +18,7 @@ use Readonly;
 use Data::Walk;
 use Try::Tiny;
 
-our $VERSION = 1.07;
+our $VERSION = 1.08;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -188,7 +188,7 @@ sub _override_dbi_execute {
             }
             catch {
                 my $error = $_;
-                say STDERR $error;
+                # say STDERR $error;
             };
 
             my $rows       = $sth->rows();

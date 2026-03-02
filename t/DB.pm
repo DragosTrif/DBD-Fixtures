@@ -6,7 +6,7 @@ use warnings;
 use Rose::DB;
 use base qw(Rose::DB);
 use Data::Dumper;
-use Test::mysqld;
+
 use File::Which qw(which);
 # Use a private registry for this class
 __PACKAGE__->use_private_registry;
@@ -27,7 +27,7 @@ __PACKAGE__->register_db(
 my $mysqld_check = which('mysqld') || which('mariadb');
 
 if ( $mysqld_check ) {
-
+    require Test::mysqld;
     our $mysqld = Test::mysqld->new(
         mysqld => $mysqld_check,    # MariaDB binary
         my_cnf => {
