@@ -4,6 +4,16 @@ use warnings;
 use Test2::V0;
 use Try::Tiny;
 use File::Path qw(rmtree);
+use File::Which qw(which);
+
+BEGIN {
+    my $mysqld_check =  which('mysqld') || which('mariadb');
+
+    if ( !$mysqld_check ) {
+        plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+    }
+};
+
 
 use lib qw(lib t);
 
@@ -18,12 +28,6 @@ SQL
 my $failed_sql_user_login_history = <<"SQL";
 INSERT INTO user_login_history (id) VALUES (?)
 SQL
-
-
-my $mysqld_check = which('mysqld') || which('mariadb');
-if ( !$mysqld_check ) {
-    plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
-}
 
 my $obj = DBD::Mock::Session::GenerateFixtures->new( { file => 't/db_fixtures/18_test_transactions_with_mysql.t.json' } );
 

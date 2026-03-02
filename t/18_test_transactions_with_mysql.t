@@ -3,9 +3,18 @@ use warnings;
 
 use Test2::V0;
 use Try::Tiny;
+use File::Which qw(which);
+
+BEGIN {
+    my $mysqld_check =  which('mysqld') || which('mariadb');
+
+    if ( !$mysqld_check ) {
+        plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+    }
+};
 
 use lib        qw(lib t);
-use MyDatabase qw(build_mysql_db populate_test_db);
+
 
 use DBI;
 use Data::Dumper;
@@ -13,13 +22,8 @@ use DBD::Mock::Session::GenerateFixtures;
 use Sub::Override;
 use File::Path qw(rmtree);
 use Test::mysqld;
-use File::Which qw(which);
 
-my $mysqld_check =  which('mysqld') || which('mariadb');
-
-if ( !$mysqld_check ) {
-    plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
-}
+use MyDatabase qw(build_mysql_db populate_test_db);
 
 my $mysqld = Test::mysqld->new(
     my_cnf => {

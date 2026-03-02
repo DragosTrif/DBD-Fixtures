@@ -3,29 +3,33 @@ use warnings;
 
 use Test2::V0;
 use Try::Tiny;
+use File::Path qw(rmtree);
+use File::Which qw(which);
 
 use lib        qw(lib t);
-use MyDatabase qw(build_mysql_db populate_test_db);
+
+BEGIN {
+    my $mysqld_check  = which('mysqld') || which('mariadb');
+
+    if ( !$mysqld_check ) {
+        plan skip_all =>
+    "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+    }
+
+};
 
 use DBI;
 use Data::Dumper;
 use DBD::Mock::Session::GenerateFixtures;
 use Rose::DB::Object::Loader;
 use Sub::Override;
-use File::Path qw(rmtree);
-use File::Which qw(which);
 use Try::Tiny;
+
+use MyDatabase qw(build_mysql_db populate_test_db);
 
 rmtree 't/db_fixtures';
 rmtree 't/DB';
 unlink 't/rose_test_db';
-
-my $mysqld_check  = which('mysqld') || which('mariadb');
-
-if ( !$mysqld_check ) {
-    plan skip_all =>
-"MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
-}
 
 my $override = Sub::Override->new();
 
