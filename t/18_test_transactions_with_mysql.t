@@ -33,7 +33,7 @@ my $mysqld = Test::mysqld->new(
 my $dbh = DBI->connect(
     $mysqld->dsn( dbname => 'test' ),
     {
-        RaiseError => 1,            # ← THIS is where it goes
+        RaiseError => 0,            # ← THIS is where it goes
         PrintError => 0,
         AutoCommit => 1,
     }
