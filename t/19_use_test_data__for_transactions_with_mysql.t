@@ -150,5 +150,5 @@ subtest 'upsert generate mock data for nested transactions - small trans is not 
     ok( $error_small, 'error is the small try/catch is ok' );
 };
 
-#rmtree 't/db_fixtures';
+rmtree 't/db_fixtures';
 done_testing();
