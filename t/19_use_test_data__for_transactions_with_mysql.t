@@ -3,17 +3,16 @@ use warnings;
 
 use Test2::V0;
 use Try::Tiny;
-use File::Path qw(rmtree);
+use File::Path  qw(rmtree);
 use File::Which qw(which);
 
 BEGIN {
-    my $mysqld_check =  which('mysqld') || which('mariadb');
+    my $mysqld_check = which('mysqld') || which('mariadb');
 
     if ( !$mysqld_check ) {
         plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
     }
-};
-
+}
 
 use lib qw(lib t);
 
@@ -32,28 +31,40 @@ SQL
 my $obj = DBD::Mock::Session::GenerateFixtures->new( { file => 't/db_fixtures/18_test_transactions_with_mysql.t.json' } );
 
 subtest 'upsert use mock data' => sub {
-    my $dbh = $obj->get_dbh();
-    $dbh->begin_work();
-    my $sth = $dbh->prepare($sql_user_login_history);
-    my $r   = $sth->execute(1);
-    my $r_2 = $sth->execute(2);
-    $dbh->commit();
-    is( $r, 1, 'one row inserted is ok' );
-    is( $r, 1, 'second row inserted is ok' );
-
-    $dbh->begin_work();
-    my $err;
+    $obj->get_dbh()->begin_work();
+    my ( $r, $r_2 );
+    my $success = 1;
+    my $not_ok;
     try {
-        my $sth_2 = $dbh->prepare($failed_sql_user_login_history);
-
-        my $r_3 = $sth_2->execute('aa') or die $dbh->err();
+        my $sth = $obj->get_dbh()->prepare($sql_user_login_history);
+        $r   = $sth->execute(1) or die $obj->get_dbh()->err();
+        $r_2 = $sth->execute(2) or die $obj->get_dbh()->err();
     }
     catch {
-        $err = $dbh->err();
-        $dbh->rollback();
+        $not_ok = $obj->get_dbh()->err();
     };
 
-    ok( $err, 'rollback trapped an error' );
+    $obj->get_dbh()->commit() if $success;
+
+    is( $r,   1, 'one row inserted is ok' );
+    is( $r_2, 1, 'one second inserted is ok' );
+
+    $obj->get_dbh()->begin_work();
+    my $r_3;
+    my $ok    = 1;
+    my $error = undef;
+    try {
+        my $sth_2 = $obj->get_dbh()->prepare($failed_sql_user_login_history);
+        $r_3 = $sth_2->execute('aa') or die $obj->get_dbh()->err();
+    }
+    catch {
+        $ok    = 0;
+        $error = $obj->get_dbh()->err();
+        $obj->get_dbh()->rollback();
+    };
+
+    $obj->get_dbh()->commit() if $ok;
+    ok( $error, 'rollback is ok' );
 };
 
 subtest 'upsert generate mock data for nested transactions both are ok' => sub {
@@ -138,5 +149,6 @@ subtest 'upsert generate mock data for nested transactions - small trans is not 
     $dbh->commit() if $ok;
     ok( $error_small, 'error is the small try/catch is ok' );
 };
-rmtree 't/db_fixtures';
+
+#rmtree 't/db_fixtures';
 done_testing();

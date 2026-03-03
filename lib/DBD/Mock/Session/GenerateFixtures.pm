@@ -188,6 +188,7 @@ sub _override_dbi_execute {
             }
             catch {
                 my $error = $_;
+
                 # say STDERR $error;
             };
 
@@ -199,7 +200,7 @@ sub _override_dbi_execute {
             };
 
             my $result = [];
-            if ( $sql =~ m/^INSERT|^UPDATE|^DELETE/i ) {
+            if ( $sql =~ m/^INSERT|^UPDATE|^DELETE/i && $retval ) {
                 push @$result, ['rows'];
                 foreach my $row ( 1 .. $rows ) {
                     push @{$result}, [];
@@ -210,6 +211,12 @@ sub _override_dbi_execute {
             $query_data->{bound_params} = $self->{bind_params}
               if ref $self->{bind_params}
               && scalar @{ $self->{bind_params} } > 0;
+
+            # query failed:
+            if ( !$retval ) {
+                $query_data->{failure} = [ 5, 'Ooops!' ];
+                $query_data->{results} = undef;
+            }
 
             push @{ $self->{result} }, $query_data
               if $sql !~ m/BEGIN|COMMIT/;
@@ -702,11 +709,6 @@ sub _process_mock_data {
     my ( $self, $data ) = @_;
 
     while ( my ( $index, $row ) = each( @{$data} ) ) {
-        if ( $row->{statement} eq "ROLLBACK" ) {
-            $data->[ $index - 1 ]->{err}     = 1062;
-            $data->[ $index - 1 ]->{results} = undef;
-            $data->[ $index - 1 ]->{errstr}  = 'Rollback kicked in';
-        }
 
         if ( $row->{col_names} ) {
             my $cols = delete $row->{col_names};
@@ -714,7 +716,6 @@ sub _process_mock_data {
         }
     }
 
-    # say Dumper $data;
     return $self;
 }
 

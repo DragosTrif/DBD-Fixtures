@@ -6,15 +6,14 @@ use Try::Tiny;
 use File::Which qw(which);
 
 BEGIN {
-    my $mysqld_check =  which('mysqld') || which('mariadb');
+    my $mysqld_check = which('mysqld') || which('mariadb');
 
     if ( !$mysqld_check ) {
         plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
     }
-};
+}
 
-use lib        qw(lib t);
-
+use lib qw(lib t);
 
 use DBI;
 use Data::Dumper;
@@ -55,25 +54,39 @@ SQL
 subtest 'upsert generate mock data' => sub {
 
     $obj->get_dbh()->begin_work();
-    my $sth = $obj->get_dbh()->prepare($sql_user_login_history);
-    my $r   = $sth->execute(1) or die $obj->get_dbh()->err();
-    my $r_2 = $sth->execute(2) or die $obj->get_dbh()->err();
-    $obj->get_dbh()->commit();
-    is( $r, 1, 'one row inserted is ok' );
-    is( $r, 1, 'one second inserted is ok' );
+    my ( $r, $r_2 );
+    my $success = 1;
+    my $not_ok;
+    try {
+        my $sth = $obj->get_dbh()->prepare($sql_user_login_history);
+        $r   = $sth->execute(1) or die $obj->get_dbh()->err();
+        $r_2 = $sth->execute(2) or die $obj->get_dbh()->err();
+    }
+    catch {
+        $not_ok = $obj->get_dbh()->err();
+    };
+
+    $obj->get_dbh()->commit() if $success;
+
+    is( $r,   1, 'one row inserted is ok' );
+    is( $r_2, 1, 'one second inserted is ok' );
 
     $obj->get_dbh()->begin_work();
     my $r_3;
+    my $ok    = 1;
+    my $error = undef;
     try {
         my $sth_2 = $obj->get_dbh()->prepare('INSERT INTO user_login_history (id) VALUES (?)');
         $r_3 = $sth_2->execute('aa') or die $obj->get_dbh()->err();
     }
     catch {
-        note 'in catch';
+        $ok    = 0;
+        $error = $obj->get_dbh()->err();
         $obj->get_dbh()->rollback();
     };
 
-    is( $r_3, undef, 'rollback is ok' );
+    $dbh->commit() if $ok;
+    ok( $error, 'rollback is ok' );
 };
 
 subtest 'upsert generate mock data for nested transactions both are ok' => sub {
