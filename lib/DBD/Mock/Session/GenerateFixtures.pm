@@ -18,7 +18,7 @@ use Readonly;
 use Data::Walk;
 use Try::Tiny;
 
-our $VERSION = 1.10;
+our $VERSION = 1.11;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -178,7 +178,8 @@ sub _override_dbi_execute {
         sub {
             my ( $sth, @args ) = @_;
 
-            my $sql    = $sth->{Statement};
+            my $sql    = $sth->{Statement} // $sth->{Database}->{Statement} // '';
+            $sql = $self->_normalize_sql($sql);
             my $retval = $orig_execute->( $sth, @args );
 
             my $col_names;
@@ -263,7 +264,7 @@ sub _override_dbi_fetchrow_hashref {
             my ($sth) = @_;
 
             my $retval = $orig_selectrow_hashref->($sth);
-
+            $self->{result}->[-1]->{col_names} = $sth->{NAME};
             if ( ref $retval && !defined $self->{result}->[-1]->{results} ) {
                 my $query_results = $self->_set_hashref_response( $sth, $retval );
                 push @{ $self->{result}->[-1]->{results} }, $query_results;
@@ -289,7 +290,7 @@ sub _override_dbi_fetchrow_arrayref {
             my ($sth) = @_;
 
             my $retval = $orig_selectrow_arrayref->($sth);
-
+            $self->{result}->[-1]->{col_names} = $sth->{NAME};
             my @retval = ();
             if ( ref $retval ) {
                 @retval = @{$retval};
@@ -316,6 +317,7 @@ sub _override_dbi_fetchrow_array {
             my ($sth) = @_;
 
             my @retval = $orig_selectrow_array->($sth);
+            $self->{result}->[-1]->{col_names} = $sth->{NAME};
 
             if ( scalar @retval ) {
                 push @{ $self->{result}->[-1]->{results} }, \@retval;
@@ -556,10 +558,11 @@ sub _override_dbi_fecth {
         sub {
             my ( $sth, @args ) = @_;
             my $row = $original_fetch->( $sth, @args );
+            my $sql = $sth->{Statement} // $sth->{Database}->{Statement} // '';
             if ( ref $row ) {
                 my @shallow_copy = @{$row};
-                if (   $sth->{Statement} =~ /WHERE/i
-                    && $sth->{Statement} !~ /ORDER BY/i )
+                if (   $sql =~ /WHERE/i
+                    && $sql !~ /ORDER BY/i )
                 {
                     unshift @{ $self->{result}->[-1]->{results} }, \@shallow_copy;
                 }

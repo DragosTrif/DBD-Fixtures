@@ -200,6 +200,17 @@ SQL
 SQL
 
     $dbh->do($login_table);
+
+    my $create_procedure = <<"SQL";
+    CREATE PROCEDURE IF NOT EXISTS pr_user_login_history(IN p_id INT)
+    BEGIN
+        SELECT *
+        FROM user_login_history
+        WHERE id = p_id;
+    END
+SQL
+
+    $dbh->do($create_procedure);
     return 1;
 }
 

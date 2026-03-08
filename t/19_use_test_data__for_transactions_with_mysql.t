@@ -153,5 +153,20 @@ subtest 'upsert generate mock data for nested transactions - small trans is not 
     ok( $error_small, 'error is the small try/catch is ok' );
 };
 
+subtest 'test mysql proc call' => sub {
+    my $proc_call = <<"SQL";
+        CALL pr_user_login_history(?)
+SQL
+    my $sth_proc = $obj->get_dbh()->prepare($proc_call);
+    $sth_proc->execute(1);
+    my $proc_result = $sth_proc->fetchrow_hashref();
+    my $expected = {
+          'user_id' => 1,
+          'id' => 1,
+          'login_at' => '2026-03-08 19:08:04'
+        };
+    is($proc_result->{user_id}, 1);
+};
+
 rmtree 't/db_fixtures';
 done_testing();
