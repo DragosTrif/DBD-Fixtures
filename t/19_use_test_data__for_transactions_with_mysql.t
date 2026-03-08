@@ -21,6 +21,9 @@ use Data::Dumper;
 use File::Which qw(which);
 
 my $sql_user_login_history = <<"SQL";
+-- comment
+/* foo 
+bar */
 INSERT INTO user_login_history (user_id) VALUES (?)
 SQL
 

@@ -18,7 +18,7 @@ use Readonly;
 use Data::Walk;
 use Try::Tiny;
 
-our $VERSION = 1.09;
+our $VERSION = 1.10;
 
 our $override;
 my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
@@ -692,6 +692,12 @@ sub _override_dbi_rollback {
 
 sub _normalize_sql {
     my ( $self, $sql ) = @_;
+
+    # 1. remove multi-linie comments /* ... */
+    $sql =~ s/\/\*.*?\*\///gs;
+
+    # 2. remove single-line comments -- ...
+    $sql =~ s/--.*$//gm;
 
     $sql =~ s/\s+/ /g;
     $sql =~ s/^\s+|\s+$//g;
