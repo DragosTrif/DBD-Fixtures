@@ -39,9 +39,12 @@ Readonly::Hash my %MOCKED_DBI_METHODS => (
     prepare_cached     => 'DBI::db::prepare_cached',
     prepare            => 'DBI::db::prepare',
     mocked_prepare     => 'DBD::Mock::db::prepare',
+    mocked_execute     => 'DBD::Mock::st::execute',
+    mocked_bind_param  => 'DBD::Mock::st::bind_param',
     begin_work         => 'DBI::db::begin_work',
     commit             => 'DBI::db::commit',
     rollback           => 'DBI::db::rollback',
+    bind_param_in_out  => 'DBI::st::bind_param_inout',
 );
 
 sub new {
@@ -113,6 +116,8 @@ sub _set_mock_dbh {
 
     my $dbh_session = DBD::Mock::Session->new( $PROGRAM_NAME => @{$data} );
     $self->_override_dbi_mocked_prepare( $MOCKED_DBI_METHODS{mocked_prepare} );
+    $self->_override_dbi_mocked_bind_param( $MOCKED_DBI_METHODS{mocked_bind_param} );
+    $self->_override_dbi_mocked_execute( $MOCKED_DBI_METHODS{mocked_execute} );
 
     $dbh->{mock_session} = $dbh_session;
     $self->{dbh}         = $dbh;
@@ -140,6 +145,7 @@ sub _override_dbi_methods {
     $self->_override_dbi_begin_work( $MOCKED_DBI_METHODS{begin_work} );
     $self->_override_dbi_commit( $MOCKED_DBI_METHODS{commit} );
     $self->_override_dbi_rollback( $MOCKED_DBI_METHODS{rollback} );
+    $self->_override_bind_param_in_out( $MOCKED_DBI_METHODS{bind_param_in_out} );
 
     return $self;
 }
@@ -160,7 +166,7 @@ sub restore_all {
     my $self = shift;
 
     foreach my $key ( keys %MOCKED_DBI_METHODS ) {
-        next if $key eq 'mocked_prepare';
+        next if $key =~ m/^mocked/;
         $self->get_override_object()->restore( $MOCKED_DBI_METHODS{$key} );
     }
 
@@ -178,7 +184,7 @@ sub _override_dbi_execute {
         sub {
             my ( $sth, @args ) = @_;
 
-            my $sql    = $sth->{Statement} // $sth->{Database}->{Statement} // '';
+            my $sql = $sth->{Statement} // $sth->{Database}->{Statement} // '';
             $sql = $self->_normalize_sql($sql);
             my $retval = $orig_execute->( $sth, @args );
 
@@ -213,6 +219,12 @@ sub _override_dbi_execute {
               if ref $self->{bind_params}
               && scalar @{ $self->{bind_params} } > 0;
 
+            if ( $self->{bind_named_params} && scalar keys %{ $self->{bind_named_params} } ) {
+                my %seen  = ();
+                my @order = grep { !$seen{$_}++ } ( $sql =~ m/(:\w+)/g );
+                $query_data->{bound_params} = [ map { $self->{bind_named_params}->{$_} } @order ];
+            }
+
             # query failed:
             if ( !$retval ) {
                 $query_data->{failure} = [ 5, 'Ooops!' ];
@@ -220,11 +232,63 @@ sub _override_dbi_execute {
             }
 
             push @{ $self->{result} }, $query_data
-              if $sql !~ m/BEGIN|COMMIT/;
+              if $sql !~ m/BEGIN_WORK|COMMIT/;
             $self->_write_to_file();
-            $self->{bind_params} = [];
-            $self->{sth}         = $sth;
+            $self->{bind_params}       = [];
+            $self->{bind_named_params} = {};
+            $self->{sth}               = $sth;
             return $retval;
+        }
+    );
+
+    return $self;
+}
+
+sub _override_dbi_mocked_execute {
+    my $self               = shift;
+    my $mocked_dbi_execute = shift;
+
+    my $orig_mocked_dbi_execute = \&$mocked_dbi_execute;
+
+    $self->get_override_object()->replace(
+        $mocked_dbi_execute,
+        sub {
+            my ( $sth, @params ) = @_;
+
+            if ( $self->{bind_named_params} && scalar keys %{ $self->{bind_named_params} } ) {
+                my %seen  = ();
+                my $sql   = $sth->{Statement} // $sth->{Database}->{Statement} // '';
+                my @order = grep { !$seen{$_}++ } ( $sql =~ m/(:\w+)/g );
+                @params = map { $self->{bind_named_params}->{$_} } @order;
+            }
+
+            $self->{bind_named_params} = {};
+            $self->{bind_parmas}       = [];
+            return $orig_mocked_dbi_execute->( $sth, @params );
+        }
+    );
+}
+
+sub _override_dbi_mocked_bind_param {
+    my $self              = shift;
+    my $mocked_bind_param = shift;
+
+    my $orig_mocked_bind_param = \&$mocked_bind_param;
+
+    $self->get_override_object()->replace(
+        $mocked_bind_param,
+        sub {
+            my ( $sth, $bind, $val, $attr ) = @_;
+
+            return if !$bind && !$val;
+            if ( $bind =~ m/^:/ ) {
+                $self->{bind_named_params}->{$bind} = $val;
+            }
+            else {
+                $self->{bind_parmas}->[ $bind - 1 ] = $val;
+            }
+
+            return $orig_mocked_bind_param->( $sth, $bind, $val, $attr );
         }
     );
 
@@ -240,11 +304,42 @@ sub _override_dbi_bind_param {
     $self->get_override_object()->replace(
         $bind_param,
         sub {
-            my ( $sth, $bind, $val ) = @_;
+            my ( $sth, $bind, $val, $attr ) = @_;
+            return if !$bind && !$val;
+            if ( $bind =~ m/^:/ ) {
+                $self->{bind_named_params}->{$bind} = $val;
+            }
+            else {
+                $self->{bind_parmas}->[ $bind - 1 ] = $val;
+            }
 
-            push @{ $self->{bind_params} }, $val;
+            my $retval = $orig_execute->( $sth, $bind, $val, $attr );
+            return $retval;
+        }
+    );
 
-            my $retval = $orig_execute->( $sth, $bind, $val );
+    return $self;
+}
+
+sub _override_bind_param_in_out {
+    my $self              = shift;
+    my $bind_param_in_out = shift;
+
+    my $orig_bind_param_in_out = \&$bind_param_in_out;
+
+    $self->get_override_object()->replace(
+        $bind_param_in_out,
+        sub {
+            my ( $sth, $bind, $val, $max_length, $attr ) = @_;
+
+            if ( $bind =~ m/^:/ ) {
+                $self->{bind_named_params}->{$bind} = 1;
+            }
+            else {
+                $self->{bind_parmas}->[ $bind - 1 ] = 1;
+            }
+
+            my $retval = $orig_bind_param_in_out->( $sth, $bind, $val, $max_length, $attr );
             return $retval;
         }
     );
