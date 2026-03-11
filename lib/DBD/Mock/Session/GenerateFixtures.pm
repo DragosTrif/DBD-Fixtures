@@ -844,7 +844,7 @@ sub _process_mock_data {
 
         # load in the mocked session the a global scalar ref for the cursor
         # use the same global scalar in the override for DBD::st::bind_param_inout
-        $row->{bound_params} = [ map { $_ eq '<CURSOR>' ? $ref_cursor : $_ } @{ $row->{bound_params} } ];
+        $row->{bound_params} = [ map { defined $_ && $_ eq '<CURSOR>' ? $ref_cursor : $_ } @{ $row->{bound_params} } ];
         if ( $row->{col_names} ) {
             my $cols = delete $row->{col_names};
             unshift @{ $row->{results} }, $cols;
