@@ -18,33 +18,36 @@ use Readonly;
 use Data::Walk;
 use Try::Tiny;
 
-our $VERSION = 1.11;
+our $VERSION = 1.12;
 
 our $override;
-my $JSON_OBJ = Cpanel::JSON::XS->new()->utf8->pretty();
+my $JSON_OBJ   = Cpanel::JSON::XS->new()->utf8->pretty();
+my $cursor     = 1;
+my $ref_cursor = \$cursor;
 
 Readonly::Hash my %MOCKED_DBI_METHODS => (
-    execute            => 'DBI::st::execute',
-    bind_param         => 'DBI::st::bind_param',
-    fetchrow_hashref   => 'DBI::st::fetchrow_hashref',
-    fetchrow_arrayref  => 'DBI::st::fetchrow_arrayref',
-    fetchrow_array     => 'DBI::st::fetchrow_array',
-    selectall_arrayref => 'DBI::db::selectall_arrayref',
-    selectall_hashref  => 'DBI::db::selectall_hashref',
-    selectcol_arrayref => 'DBI::db::selectcol_arrayref',
-    selectrow_array    => 'DBI::db::selectrow_array',
-    selectrow_arrayref => 'DBI::db::selectrow_arrayref',
-    selectrow_hashref  => 'DBI::db::selectrow_hashref',
-    fetch              => 'DBI::st::fetch',
-    prepare_cached     => 'DBI::db::prepare_cached',
-    prepare            => 'DBI::db::prepare',
-    mocked_prepare     => 'DBD::Mock::db::prepare',
-    mocked_execute     => 'DBD::Mock::st::execute',
-    mocked_bind_param  => 'DBD::Mock::st::bind_param',
-    begin_work         => 'DBI::db::begin_work',
-    commit             => 'DBI::db::commit',
-    rollback           => 'DBI::db::rollback',
-    bind_param_in_out  => 'DBI::st::bind_param_inout',
+    execute                  => 'DBI::st::execute',
+    bind_param               => 'DBI::st::bind_param',
+    fetchrow_hashref         => 'DBI::st::fetchrow_hashref',
+    fetchrow_arrayref        => 'DBI::st::fetchrow_arrayref',
+    fetchrow_array           => 'DBI::st::fetchrow_array',
+    selectall_arrayref       => 'DBI::db::selectall_arrayref',
+    selectall_hashref        => 'DBI::db::selectall_hashref',
+    selectcol_arrayref       => 'DBI::db::selectcol_arrayref',
+    selectrow_array          => 'DBI::db::selectrow_array',
+    selectrow_arrayref       => 'DBI::db::selectrow_arrayref',
+    selectrow_hashref        => 'DBI::db::selectrow_hashref',
+    fetch                    => 'DBI::st::fetch',
+    prepare_cached           => 'DBI::db::prepare_cached',
+    prepare                  => 'DBI::db::prepare',
+    mocked_prepare           => 'DBD::Mock::db::prepare',
+    mocked_execute           => 'DBD::Mock::st::execute',
+    mocked_bind_param        => 'DBD::Mock::st::bind_param',
+    mocked_bind_param_in_out => 'DBD::Mock::st::bind_param_inout',
+    begin_work               => 'DBI::db::begin_work',
+    commit                   => 'DBI::db::commit',
+    rollback                 => 'DBI::db::rollback',
+    bind_param_in_out        => 'DBI::st::bind_param_inout',
 );
 
 sub new {
@@ -117,6 +120,7 @@ sub _set_mock_dbh {
     my $dbh_session = DBD::Mock::Session->new( $PROGRAM_NAME => @{$data} );
     $self->_override_dbi_mocked_prepare( $MOCKED_DBI_METHODS{mocked_prepare} );
     $self->_override_dbi_mocked_bind_param( $MOCKED_DBI_METHODS{mocked_bind_param} );
+    $self->_override_dbi_mocked_bind_param_in_out( $MOCKED_DBI_METHODS{mocked_bind_param_in_out} );
     $self->_override_dbi_mocked_execute( $MOCKED_DBI_METHODS{mocked_execute} );
 
     $dbh->{mock_session} = $dbh_session;
@@ -280,7 +284,6 @@ sub _override_dbi_mocked_bind_param {
         sub {
             my ( $sth, $bind, $val, $attr ) = @_;
 
-            return if !$bind && !$val;
             if ( $bind =~ m/^:/ ) {
                 $self->{bind_named_params}->{$bind} = $val;
             }
@@ -289,6 +292,31 @@ sub _override_dbi_mocked_bind_param {
             }
 
             return $orig_mocked_bind_param->( $sth, $bind, $val, $attr );
+        }
+    );
+
+    return $self;
+}
+
+sub _override_dbi_mocked_bind_param_in_out {
+    my $self                     = shift;
+    my $mocked_bind_param_in_out = shift;
+
+    my $orig_mocked_bind_param = \&$mocked_bind_param_in_out;
+
+    $self->get_override_object->replace(
+        $mocked_bind_param_in_out,
+        sub {
+            my ( $sth, $param_num, $val, $max_len ) = @_;
+
+            if ( $param_num =~ m/^:/ ) {
+                $self->{bind_named_params}->{$param_num} = $ref_cursor;
+            }
+            else {
+                $self->{bind_parmas}->[ $param_num - 1 ] = $ref_cursor;
+            }
+
+            return $orig_mocked_bind_param->( $sth, $param_num, $ref_cursor, $max_len );
         }
     );
 
@@ -333,10 +361,10 @@ sub _override_bind_param_in_out {
             my ( $sth, $bind, $val, $max_length, $attr ) = @_;
 
             if ( $bind =~ m/^:/ ) {
-                $self->{bind_named_params}->{$bind} = 1;
+                $self->{bind_named_params}->{$bind} = '<CURSOR>';
             }
             else {
-                $self->{bind_parmas}->[ $bind - 1 ] = 1;
+                $self->{bind_parmas}->[ $bind - 1 ] = '<CURSOR>';
             }
 
             my $retval = $orig_bind_param_in_out->( $sth, $bind, $val, $max_length, $attr );
@@ -814,6 +842,9 @@ sub _process_mock_data {
 
     while ( my ( $index, $row ) = each( @{$data} ) ) {
 
+        # load in the mocked session the a global scalar ref for the cursor
+        # use the same global scalar in the override for DBD::st::bind_param_inout
+        $row->{bound_params} = [ map { $_ eq '<CURSOR>' ? $ref_cursor : $_ } @{ $row->{bound_params} } ];
         if ( $row->{col_names} ) {
             my $cols = delete $row->{col_names};
             unshift @{ $row->{results} }, $cols;
