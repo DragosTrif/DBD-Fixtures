@@ -33,12 +33,12 @@ my $mysqld = Test::mysqld->new(
 my $dbh = DBI->connect(
     $mysqld->dsn( dbname => 'test' ),
     {
-        RaiseError => 0,            # ← THIS is where it goes
+        RaiseError => 1,            # ← THIS is where it goes
         PrintError => 0,
         AutoCommit => 1,
     }
 );
-
+$dbh->do("SET SESSION sql_mode=''");
 build_mysql_db($dbh);
 populate_test_db($dbh);
 my $obj = DBD::Mock::Session::GenerateFixtures->new( { dbh => $dbh } );
