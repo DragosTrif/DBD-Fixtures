@@ -1,48 +1,39 @@
-name: Perl CI
+name: CI
 
 on:
   push:
   pull_request:
-
+  workflow_dispatch:
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  perl-job:
+  strategy:
+    fail-fast: false
+    matrix:
+      runner:
+        - ubuntu-latest
+      perl:
+        - "5.42.0"
 
-    strategy:
-      matrix:
-        perl: ['5.42.0']
+  runs-on: ${{matrix.runner}}
+  name: OS ${{matrix.runner}} Perl ${{matrix.perl}}
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  steps:
+    - uses: actions/checkout@v6
 
-      - name: Setup Perl
-        uses: shogo82148/actions-setup-perl@v1
-        with:
-          perl-version: ${{ matrix.perl }}
-          install-modules-with: cpanm
-          enable-modules-cache: true
+    - name: Set up perl
+      uses: shogo82148/actions-setup-perl@v1
+      with:
+        perl-version: ${{ matrix.perl }}
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          mysql-server \
+          mysql-client \
+          libmysqlclient-dev
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            mysql-server \
-            mysql-client \
-            libmysqlclient-dev
-
-      - name: Install and Build
-        run: |
-          cpanm --notest ExtUtils::MakeMaker
-          cpanm --notest DBD::Mock DBD::SQLite DBI Data::Walk Exporter::NoWork \
-            File::Slurper Readonly Rose::DB Rose::DB::Object \
-            Rose::DB::Object::Loader Rose::DB::Object::Manager \
-            Sub::Override Try::Tiny File::Which
-          cpanm --notest --force Test::mysqld Rose::DB::MySQL
-          cpanm DBD::mysql
-          perl Makefile.PL
-          make
-          make install
-
-      - name: Run tests
-        run: prove -v ./t
+    - name: Run Tests on Linux
+      run: |
+        perl Makefile.PL
+        make
+        make test
