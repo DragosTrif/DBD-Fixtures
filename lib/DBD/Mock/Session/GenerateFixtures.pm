@@ -18,7 +18,7 @@ use Readonly;
 use Data::Walk;
 use Try::Tiny;
 
-our $VERSION = 1.14;
+our $VERSION = 1.15;
 
 our $override;
 my $JSON_OBJ   = Cpanel::JSON::XS->new()->utf8->pretty();
