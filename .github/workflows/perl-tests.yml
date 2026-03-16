@@ -34,6 +34,7 @@ jobs:
             libmysqlclient-dev
           curl -L https://cpanmin.us | perl - --sudo App::cpanminus
           cpanm File::Which
+          cpanm --notest --installdeps .
 
       - name: Run Tests on Linux
         run: |
