@@ -13,27 +13,28 @@ jobs:
           - ubuntu-latest
         perl:
           - "5.42.0"
-  runs-on: ${{ matrix.runner }}
-  name: OS ${{ matrix.runner }} Perl ${{ matrix.perl }}
+    # Acestea trebuie să fie indentate la același nivel cu strategy
+    runs-on: ${{ matrix.runner }}
+    name: OS ${{ matrix.runner }} Perl ${{ matrix.perl }}
 
-  steps:
-    - uses: actions/checkout@v6
+    steps:
+      - uses: actions/checkout@v6
 
-    - name: Set up perl
-      uses: shogo82148/actions-setup-perl@v1
-      with:
-        perl-version: ${{ matrix.perl }}
+      - name: Set up perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          mysql-server \
-          mysql-client \
-          libmysqlclient-dev
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            mysql-server \
+            mysql-client \
+            libmysqlclient-dev
 
-    - name: Run Tests on Linux
-      run: |
-        perl Makefile.PL
-        make
-        make test
+      - name: Run Tests on Linux
+        run: |
+          perl Makefile.PL
+          make
+          make test
