@@ -31,6 +31,7 @@ rmtree 't/db_fixtures';
 rmtree 't/DB';
 unlink 't/rose_test_db';
 
+
 my $override = Sub::Override->new();
 
 my $db = DB->new(
