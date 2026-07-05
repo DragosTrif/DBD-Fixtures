@@ -9,7 +9,8 @@ BEGIN {
     my $mysqld_check = which('mysqld') || which('mariadb');
 
     if ( !$mysqld_check ) {
-        plan skip_all => "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+        plan skip_all =>
+"MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
     }
 }
 
@@ -25,14 +26,14 @@ use Test::mysqld;
 use MyDatabase qw(build_mysql_db populate_test_db);
 
 BEGIN {
-    my $mysqld_check  = which('mysqld') || which('mariadb');
+    my $mysqld_check = which('mysqld') || which('mariadb');
 
     if ( !$mysqld_check ) {
         plan skip_all =>
-    "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+"MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
     }
 
-};
+}
 
 my $mysqld = Test::mysqld->new(
     my_cnf => {
@@ -52,6 +53,7 @@ $dbh->do("SET SESSION sql_mode=''");
 build_mysql_db($dbh);
 populate_test_db($dbh);
 my $obj = DBD::Mock::Session::GenerateFixtures->new( { dbh => $dbh } );
+$obj->get_dbh()->{PrintError} = 0;
 
 my $sql_user_login_history = <<"SQL";
 -- comment
@@ -90,7 +92,8 @@ subtest 'upsert generate mock data' => sub {
     my $error = undef;
     try {
         my $sth_2 = $obj->get_dbh()->prepare($failed_sql_user_login_history);
-        $r_3 = $sth_2->execute(1) or die 'can not commit' . $obj->get_dbh()->err();
+        $r_3 = $sth_2->execute(1)
+          or die 'can not commit' . $obj->get_dbh()->err();
     }
     catch {
         $ok    = 0;
@@ -104,6 +107,7 @@ subtest 'upsert generate mock data' => sub {
 
 subtest 'upsert generate mock data for nested transactions both are ok' => sub {
     my $dbh = $obj->get_dbh();
+
     try {
         $dbh->begin_work();
         my $sth = $dbh->prepare($sql_user_login_history);
@@ -125,7 +129,9 @@ subtest 'upsert generate mock data for nested transactions both are ok' => sub {
 
 };
 
-subtest 'upsert generate mock data for nested transactions - big trans is not ok' => sub {
+subtest
+  'upsert generate mock data for nested transactions - big trans is not ok' =>
+  sub {
     my $error_big   = undef;
     my $error_small = undef;
 
@@ -154,9 +160,11 @@ subtest 'upsert generate mock data for nested transactions - big trans is not ok
     $dbh->commit() if $ok;
 
     ok( $error_big, 'error in the big try/catch is ok' );
-};
+  };
 
-subtest 'upsert generate mock data for nested transactions - small trans is not ok' => sub {
+subtest
+  'upsert generate mock data for nested transactions - small trans is not ok'
+  => sub {
     my $error_big   = undef;
     my $error_small = undef;
 
@@ -183,7 +191,7 @@ subtest 'upsert generate mock data for nested transactions - small trans is not 
 
     $dbh->commit() if $ok;
     ok( $error_small, 'error in the small try/catch is ok' );
-};
+  };
 
 subtest 'test mysql proc call' => sub {
     my $proc_call = <<"SQL";
@@ -192,12 +200,12 @@ SQL
     my $sth_proc = $dbh->prepare($proc_call);
     $sth_proc->execute(1);
     my $proc_result = $sth_proc->fetchrow_hashref();
-    my $expected = {
-          'user_id' => 1,
-          'id' => 1,
-          'login_at' => '2026-03-08 19:08:04'
-        };
-    is($proc_result->{user_id}, 1);
+    my $expected    = {
+        'user_id'  => 1,
+        'id'       => 1,
+        'login_at' => '2026-03-08 19:08:04'
+    };
+    is( $proc_result->{user_id}, 1 );
 };
 
 done_testing();
