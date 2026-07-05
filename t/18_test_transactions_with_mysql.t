@@ -4,6 +4,7 @@ use warnings;
 use Test2::V0;
 use Try::Tiny;
 use File::Which qw(which);
+use Rose::DB::Object::Loader;
 
 BEGIN {
     my $mysqld_check = which('mysqld') || which('mariadb');
@@ -41,19 +42,21 @@ my $mysqld = Test::mysqld->new(
     }
 ) or die "Failed to start Test::mysqld";
 
-my $dbh = DBI->connect(
-    $mysqld->dsn( dbname => 'test' ),
-    {
-        RaiseError => 1,            # ← THIS is where it goes
-        PrintError => 0,
-        AutoCommit => 1,
-    }
+my $db = DB->new(
+    domain => 'mysql_test',
+    type   => 'mysql_test',
 );
-$dbh->do("SET SESSION sql_mode=''");
-build_mysql_db($dbh);
-populate_test_db($dbh);
-my $obj = DBD::Mock::Session::GenerateFixtures->new( { dbh => $dbh } );
-$obj->get_dbh()->{PrintError} = 0;
+my $loader = Rose::DB::Object::Loader->new(
+    db           => $db,
+    class_prefix => 'DB'
+) or die "Failed to create loader: $@";
+
+$db->dbh()->do("SET SESSION sql_mode=''");
+build_mysql_db( $db->dbh );
+populate_test_db( $db->dbh );
+my $obj = DBD::Mock::Session::GenerateFixtures->new( { dbh => $db->dbh() } );
+
+# $obj->get_dbh()->{PrintError} = 0;
 
 my $sql_user_login_history = <<"SQL";
 -- comment
@@ -101,7 +104,7 @@ subtest 'upsert generate mock data' => sub {
         $obj->get_dbh()->rollback();
     };
 
-    $dbh->commit() if $ok;
+    $obj->get_dbh()->commit() if $ok;
     ok( $error, 'rollback is ok' );
 };
 
@@ -197,7 +200,7 @@ subtest 'test mysql proc call' => sub {
     my $proc_call = <<"SQL";
         CALL pr_user_login_history(?)
 SQL
-    my $sth_proc = $dbh->prepare($proc_call);
+    my $sth_proc = $db->dbh()->prepare($proc_call);
     $sth_proc->execute(1);
     my $proc_result = $sth_proc->fetchrow_hashref();
     my $expected    = {
