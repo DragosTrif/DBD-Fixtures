@@ -36,12 +36,6 @@ BEGIN {
 
 }
 
-my $mysqld = Test::mysqld->new(
-    my_cnf => {
-        'skip-networking' => '',    # no TCP socket
-    }
-) or die "Failed to start Test::mysqld";
-
 my $db = DB->new(
     domain => 'mysql_test',
     type   => 'mysql_test',
