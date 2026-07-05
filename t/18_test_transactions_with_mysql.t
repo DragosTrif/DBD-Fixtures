@@ -24,6 +24,16 @@ use Test::mysqld;
 
 use MyDatabase qw(build_mysql_db populate_test_db);
 
+BEGIN {
+    my $mysqld_check  = which('mysqld') || which('mariadb');
+
+    if ( !$mysqld_check ) {
+        plan skip_all =>
+    "MariaDB is not installed or not in PATH. Please run 'sudo apt-get install -y mariadb-server mariadb-client libmariadb-dev'";
+    }
+
+};
+
 my $mysqld = Test::mysqld->new(
     my_cnf => {
         'skip-networking' => '',    # no TCP socket
