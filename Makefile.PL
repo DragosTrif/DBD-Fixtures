@@ -19,11 +19,11 @@ if (!$mysqld_check) {
 
 my $TEST_REQUIRES = {
     'Try::Tiny'                 => '0.32',
-    'DBI'                       => '1.643',
+    'DBI'                       => '1.656',
     'Test2::V0'                 => '0.000145',
     'DBD::SQLite'               => '1.74',
     'Exporter::NoWork'          => '0.03',
-    'Rose::DB'                  => '0.786',
+    'Rose::DB'                  => '0.788',
     'Rose::DB::Object'          => '0.822',
     'Rose::DB::Object::Manager' => '0.813',
     'Rose::DB::Object::Loader'  => '0.799',
