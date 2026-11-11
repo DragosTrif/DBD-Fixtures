@@ -42,13 +42,14 @@ jobs:
       - name: Install cpanminus
         run: |
           curl -L https://cpanmin.us | perl - App::cpanminus
-
+      - name: Create MYMETA file 
+        run: |
+          perl Makefile.PL
+          make
       - name: Install Perl dependencies
         run: |
           cpanm --installdeps --with-develop .
 
       - name: Run tests
         run: |
-          perl Makefile.PL
-          make
           make test
