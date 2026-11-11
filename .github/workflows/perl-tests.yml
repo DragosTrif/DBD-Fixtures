@@ -49,7 +49,6 @@ jobs:
       - name: Install Perl dependencies
         run: |
           cpanm --installdeps --with-develop .
-
       - name: Run tests
         run: |
           make test
