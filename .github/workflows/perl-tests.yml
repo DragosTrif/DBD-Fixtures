@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -13,34 +14,40 @@ jobs:
           - ubuntu-latest
         perl:
           - "5.42.0"
-    # Acestea trebuie să fie indentate la același nivel cu strategy
+
     runs-on: ${{ matrix.runner }}
     name: OS ${{ matrix.runner }} Perl ${{ matrix.perl }}
 
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up perl
+      - name: Set up Perl
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
-          apt-get update && apt-get install -y \
-          curl \
-          perl \
-          make \
-          gcc \
-          mysql-server \
-          mysql-client \
-          libmysqlclient-dev \
-          libcrypt-dev \
-          && rm -rf /var/lib/apt/lists/*
-      - name: Install perl modules
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            curl \
+            make \
+            gcc \
+            build-essential \
+            pkg-config \
+            postgresql \
+            postgresql-contrib \
+            libpq-dev
+
+      - name: Install cpanminus
         run: |
-          curl -L https://cpanmin.us | perl - App::cpanminus && cpanm --installdeps --with-develop .
-      - name: Run Tests on Linux
+          curl -L https://cpanmin.us | perl - App::cpanminus
+
+      - name: Install Perl dependencies
+        run: |
+          cpanm --installdeps --with-develop .
+
+      - name: Run tests
         run: |
           perl Makefile.PL
           make
