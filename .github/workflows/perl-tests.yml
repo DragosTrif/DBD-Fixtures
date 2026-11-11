@@ -27,15 +27,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            mysql-server \
-            mysql-client \
-            libmysqlclient-dev
-          curl -L https://cpanmin.us | perl - --sudo App::cpanminus
-          cpanm File::Which
-          cpanm --notest --installdeps .
-
+          apt-get update && apt-get install -y \
+          curl \
+          perl \
+          make \
+          gcc \
+          mysql-server \
+          mysql-client \
+          libmysqlclient-dev \
+          libcrypt-dev \
+          && rm -rf /var/lib/apt/lists/*
+      - name: Install perl modules
+        run: |
+          curl -L https://cpanmin.us | perl - App::cpanminus && cpanm --installdeps --with-develop .
       - name: Run Tests on Linux
         run: |
           perl Makefile.PL
