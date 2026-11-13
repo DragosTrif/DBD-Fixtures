@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         runner:
-          - ubuntu-24.04
+          - ubuntu-latest
         perl:
           - "5.42.0"
 
@@ -30,15 +30,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            curl \
-            make \
-            gcc \
-            build-essential \
-            pkg-config \
-            postgresql \
-            postgresql-contrib \
-            libpq-dev
-
+          curl \
+          perl \
+          make \
+          gcc \
+          mysql-server \
+          mysql-client \
+          libmysqlclient-dev \
+          libcrypt-dev 
       - name: Install cpanminus
         run: |
           curl -L https://cpanmin.us | perl - App::cpanminus
